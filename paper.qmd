@@ -1,0 +1,873 @@
+---
+title: "AdaptiveConformal: An R Package for Adaptive Conformal Inference"
+subtitle: "AdaptiveConformal: An R Package for Adaptive Conformal Inference"
+author:
+  - name: Herbert Susmann
+    corresponding: true
+    email: herbert.susmann@dauphine.psl.eu
+    url: https://herbsusmann.com
+    orcid: 0000-0002-3540-8255
+    #affiliations:
+    #  - name: CNRS, Université Paris Dauphine - PSL
+    #    url: https://cnrs.fr
+    #  - name: PR[AI]RIE Institute
+    #    url: https://prairie-institute.fr/
+  - name: Margaux Zaffran
+    email: margaux.zaffran@inria.fr
+    url: https://mzaffran.github.io/
+    orcid: 0000-0001-7560-8916
+    #affiliations:
+    #  - name: INRIA
+    #    url: https://inria.fr
+    #  - name: CMAP, Ecole Polytechnique
+    #    url: https://inria.fr
+    #  - name: EDF R\&D
+    #    url: https://inria.fr
+  - name: Antoine Chambaz
+    email: antoine.chambaz@u-paris.fr
+    url: https://helios2.mi.parisdescartes.fr/~chambaz/
+    orcid: 0000-0002-5592-6471
+    #affiliations:
+    #  - name: Université Paris Cité
+    #    department: MAP5
+    #    url: https://map5.mi.parisdescartes.fr/
+  - name: Julie Josse
+    email: julie.josse@inria.fr
+    url: http://juliejosse.com/
+    orcid: 0000-0001-9547-891X
+    #affiliations:
+    #  - name: INRIA Sophia-Antipolis
+    #    url: https://www.inria.fr/fr/centre-inria-universite-cote-azur
+date: last-modified
+date-modified: last-modified
+description: |
+  Conformal Inference is a popular approach for generating prediction intervals based on the output of any point prediction method. Adaptive Conformal Inference (ACI) algorithms extend classical approaches to the case of sequentially observed data, such as time series, and exhibit strong theoretical guarantees without having to assume exchangeability of the observed data. The common thread that unites algorithms in the ACI family is that they adaptively adjust the width of the generated prediction intervals in response to the observed data. We provide a detailed description of five ACI algorithms and their theoretical guarantees, and test their performance in simulation studies. We then present a case study of producing prediction intervals for influenza incidence in the United States based on black-box point forecasts. Implementations of all the algorithms are released as an open-source R package, `AdaptiveConformal`, which also includes tools for visualizing and summarizing conformal prediction intervals.
+abstract: >+
+  Conformal Inference is a popular approach for generating prediction intervals based on the output of any point prediction method. Adaptive Conformal Inference (ACI) algorithms extend classical approaches to the case of sequentially observed data, such as time series, and exhibit strong theoretical guarantees without having to assume exchangeability of the observed data. The common thread that unites algorithms in the ACI family is that they adaptively adjust the width of the generated prediction intervals in response to the observed data. We provide a detailed description of five ACI algorithms and their theoretical guarantees, and test their performance in simulation studies. We then present a case study of producing prediction intervals for influenza incidence in the United States based on black-box point forecasts. Implementations of all the algorithms are released as an open-source R package, `AdaptiveConformal`, which also includes tools for visualizing and summarizing conformal prediction intervals.
+keywords: [Conformal inference, Adaptive conformal inference, time series, R]
+citation:
+  type: article-journal
+  container-title: "Computo"
+  doi: "xxxx"
+  url: https://computo.sfds.asso.fr/template-computo-quarto
+  publisher: "Société Française de Statistique"
+  issn: "2824-7795"
+bibliography: references.bib
+github-user: computorg
+repo: "template-computo-r"
+draft: true # set to false once the build is running
+published: false # will be set to true once accepted
+format:
+  computo-html: 
+    code-fold: true
+  computo-pdf: 
+    include-in-header:
+      - text: |
+          \usepackage{stmaryrd}
+---
+
+# Introduction
+Conformal inference methods are a family of algorithms for generating prediction intervals around point predictions [@shafer2008conformal, @angelopoulos2022gentle]. The input point predictions can be derived from any prediction method, making conformal inference a powerful tool for augmenting black-box prediction algorithms with prediction intervals. Classical conformal inference methods are able to yield marginally valid intervals with only the assumption that the observed data are _exchangeable_ (that is, the joint distribution of the data does not change based on the order of the observations).  However, in many real-world settings data are not exchangeable: for example, time series data usually can not be assumed to be exchangeable due to temporal dependence. A recent line of research examines the problem of generating prediction intervals for observations that are observed online (that is, one at a time) and for which exchangeability is not assumed to hold [@gibbs2021adaptive, @zaffran2022agaci, @gibbs2022faci, @bhatnagar2023saocp]. These methods, which we refer to generally as _Adaptive Conformal Inference_ (ACI) algorithms, work by adaptively adjusting the width of the generated prediction intervals in response to the observed data. 
+
+Informally, suppose a sequence of outcomes $y_t \in \mathbb{R}$, $t = 1, \dots, T$ are observed one at a time. Before seeing each observation, we have at our disposal a point prediction $\hat{\mu}_t \in \mathbb{R}$, which can come from any source. Our goal is to find an algorithm for producing prediction intervals $[\ell_t, u_t]$, $\ell_t \leq u_t$ such that, in the long run, the observations $y_t$ fall within the corresponding prediction intervals roughly $\alpha \times 100\%$ of the time. The original Adaptive Conformal Inference algorithm [@gibbs2021adaptive] is based on a simple idea: if the previous prediction interval at time $t-1$ did not cover the true observation, then the next prediction interval at time $t$ is made slightly wider. Conversely, if the previous prediction interval did include the observation, then the next prediction interval is made slightly narrower. It can be shown that, by choosing wisely how fast the intervals change size, this procedure yields prediction intervals that in the long run cover the true observations roughly the desired proportion of the time. 
+
+The main tuning parameter of the original ACI algorithm is a learning rate that controls how fast prediction interval width changes. If the learning rate is too low, then the prediction intervals will not be able to adapt fast enough to shifts in the data generating distribution; if it is too large, then the intervals will oscillate widely. The critical dependence of the original ACI algorithm on proper choice of the its learning rate spurred subsequent research into meta-algorithms that learn the correct learning rate (or an analogue thereof) in various ways, typically drawing on approaches from the online learning literature. In this paper, we present four such algorithms: Aggregated ACI [AgACI, @zaffran2022agaci], Fully Adaptive Conformal Inference [FACI, @gibbs2022faci], Scale-Free Online Gradient Descent [SF-OGD, @bhatnagar2023saocp], and Strongly Adaptive Online Conformal Prediction [SAOCP, @bhatnagar2023saocp]. 
+
+Our primary practical contribution is an implementation of each algorithm in an open source R package, `AdaptiveConformal`, which is available at [https://github.com/herbps10/AdaptiveConformal](https://github.com/herbps10/AdaptiveConformal). The package also includes routines for visualization and summary of the prediction intervals. We note that Python versions of several algorithms were also made available by @zaffran2022agaci and @bhatnagar2023saocp, but to our knowledge this is the first R package to implement them.
+
+The rest of the paper unfolds as follows. In @sec-theory, we present a unified theoretical framework for analyzing the ACI algorithms based on the online learning paradigm. In @sec-algorithms we provide descriptions of each algorithm along with their known theoretical properties. In @sec-simulations we compare the performance of the algorithms in several simulation studies. @sec-case-study gives a case study of generating prediction intervals for influenza incidence in the United States based on black-box point forecasts. Finally, @sec-discussion provides a discussion and ideas for future research in this rapidly expanding subfield.
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(patchwork)
+library(future)
+library(furrr)
+library(progressr)
+
+# Contents of helpers.R included in the appendix
+source("helpers.R")
+```
+
+# Theoretical Framework {#sec-theory}
+*Notation*: for any integer $N \geq 1$ let $\llbracket N \rrbracket = \{ 1, \dots, N \}$. Let $\mathbb{I}$ be the indicator function. Let $\nabla f$ denote the subgradient of the function $f$.
+
+We consider an online learning scenario in which we gain access to a sequence of observations $(y_t)_{t \geq 1}$ one at a time (see @cesabianchi2006games for an comprehensive account of online learning theory). Fix $\alpha \in (0, 1)$ to be the target empirical coverage of the prediction intervals. The goal is to output at time $t$ a prediction interval for the unseen observation $y_{t+1}$, with the prediction interval generated by an _interval construction function_ $\hat{C}_{t+1}$. Formally, let $\hat{C}_t$ be a function that takes as input a parameter $\theta_t \in \mathbb{R}$ and outputs a closed prediction interval $[\ell_t, u_t]$. The interval construction function must be nested: if $\theta^\prime > \theta$, then $\hat{C}_t(\theta) \subseteq \hat{C}_t(\theta^\prime)$. That is, larger values of $\theta$ imply wider prediction intervals. The interval constructor is indexed by $t$ to emphasize that it may use other information at each time point, such as a point prediction $\hat{\mu}_t \in \mathbb{R}$. We make no restrictions on how this external information is generated. 
+
+Define $r_t := \inf\{\theta \in \mathbb{R} : \mathbb{I}(y_t \in \hat{C}_t(\theta)) \}$ to be the _radius_ at time $t$. The radius is the smallest possible $\theta$ such that the prediction interval covers the observation $y_t$. A key assumption for the theoretical analysis of several of the algorithms is that the radii are bounded: that is, there exists a $D > 0$ such that $r_t < D$ for all $t$.
+
+Next, we describe two possible definitions of the interval construction function.
+
+## Linear Intervals
+A simple method for forming the prediction intervals is to use the parameter $\theta_t$ to directly define the width of the interval. Suppose that at each time $t$ we have access to a point prediction $\hat{\mu}_t \in \mathbb{R}$. Then we can form a symmetric prediction interval around the point estimate as
+$$
+\begin{aligned}
+  \hat{C}_t(\theta_t) := [\hat{\mu}_t - \theta_t, \hat{\mu}_t + \theta_t].
+\end{aligned}
+$$
+We refer to this as the _linear interval constructor_. Note that in this case, the radius is simply the absolute residual $r_t = |\hat{\mu}_t - y_t|$. We focus primarily on this interval constructor in this paper, and it is the default used in the `Adaptive Conformal` R package. _Alternatively, we could also include results for all the algorithms run with conformal interval scores, perhaps in appendix_
+
+## Conformal Intervals
+The original ACI paper proposed constructing intervals based on the previously observed residuals [@gibbs2021adaptive]. Let $S(\hat{\mu}, y) : \mathbb{R}^2 \to \mathbb{R}$ be a function called a _conformity score_. A popular choice of conformity score is the absolute residual: $S(\hat{\mu}, y) := |y - \hat{\mu}|$.  Let $s_t := S(\hat{\mu}_t, y_t)$ be the conformity score of the $t$th-observation. The conformal interval construction function is then given by
+$$
+\begin{aligned}
+  \hat{C}_t(\theta_t) := [\hat{\mu}_t - \mathrm{Quantile}(\theta, \{ s_1, \dots, s_{t-1} \}), \hat{\mu}_t + \mathrm{Quantile}(\theta, \{ s_1, \dots, s_{t-1} \})].
+\end{aligned}
+$$
+where $\mathrm{Quantile}(\theta, A)$ denotes the empirical $\theta$-quantile of the elements in the set $A$. Note that $\hat{C}_t$ is indeed nested in $\theta_t$ because the Quantile function is non-decreasing in $\theta$.
+
+The `AdaptiveConformal` package takes the absolute residual as the default conformity score, although the user may also specify any custom conformity score by supplying it as an R function.
+
+## Online Learning Framework
+We now introduce a loss function that defines the quality of a prediction interval with respect to a realized observation. Define the _pinball loss_ $L^\alpha$ as
+$$
+L^\alpha(\theta_t, r_t) := \begin{cases}
+  (1-\alpha)(r_t - \theta), & r_t \leq \theta, \\
+  \alpha(\theta - r_t), & \theta < r_t.
+\end{cases}
+$$
+The way in which we observe the data and incur losses is as follows:
+
+- For $t = 1, \dots, T$:
+  - Predict radius $\theta_t$ and form prediction interval $\hat{C}_t(\theta_t)$.
+  - Observe true outcome $y_t$ and calculate true radius $r_t$.
+  - Record $\mathrm{err}_t := \mathbb{I}[y_t \not\in \hat{C}_t(\theta_t)]$.
+  - Incur loss $L^\alpha(\theta_t, r_t)$.
+  
+There are two different perspectives we can take in measuring the quality of an ACI algorithm that generates a sequence $\theta_t$, $t \in \llbracket T \rrbracket$. First, we could look at how close the empirical coverage of the generated prediction intervals is to the desired coverage level $\alpha$. Formally, define the empirical coverage as the proportion of observations that fell within the corresponding prediction interval: $\mathrm{EmpCov}(T) := \frac{1}{T} \sum_{t=1}^T (1 - \mathrm{err}_t)$. The coverage error is then given by
+$$
+\begin{aligned}
+  \mathrm{CovErr}(T) := \mathrm{EmpCov}(T) - \alpha.
+\end{aligned}
+$$
+The second perspective is to look at how well the algorithm controls the incurred pinball losses. Following the classical framework from the online learning literature, we define the _regret_ as the difference between the cumulative loss yielded by a sequence $\theta_t$ versus the cumulative loss of the best possible fixed choice $\theta^*$:
+$$
+\begin{aligned}
+  \mathrm{Reg}(T) := \sum_{t=1}^T L^\alpha(\theta_t, r_t) - \min_{\theta^* \in \mathbb{R}} \sum_{t=1}^T L^\alpha(\theta^*, r_t).
+\end{aligned}
+$$
+In settings of distribution shift, it may not be appropriate to compare the cumulative loss of an algorithm to a fixed competitor. As such, stronger notions of regret have been defined. The _Strongly Adaptive Regret_ is the largest regret over any subperiod of length $k \in \llbracket T \rrbracket$:
+$$
+\begin{aligned}
+  \mathrm{SAReg}(T, k) := \max_{[\tau, \tau + k - 1] \subseteq \llbracket T \rrbracket} \left( \sum_{t=\tau}^{\tau + k - 1} L^{\alpha}(\theta_t, r_t) - \inf_{\theta^*} \sum_{t=\tau}^{\tau + k - 1} L^\alpha(\theta^*, r_t) \right).
+\end{aligned}
+$$
+Both ways of evaluating ACI methods are important because targeting only one or the other can lead to algorithms that yield prediction intervals that are not practically useful. As a simple pathological example of only targeting the coverage error, suppose we wish to generate $\alpha = 50\%$ prediction intervals. We could choose to alternate $\theta$ between 0 and $\infty$, such that $\mathrm{err}_t$ alternates between 0 and 1. The empirical coverage would then trivially converge to the desired level of 50\%. However, the same algorithm would yield infinite regret (see @bhatnagar2023saocp for a more in-depth example of an scenario in which coverage is optimal but the regret grows linearly). On the other hand, an algorithm that has arbitrarily small regret may not yield good empirical coverage. Suppose the observations and point predictions are constant: $y_t = 1$ and $\hat{\mu}_t = 0$ for all $t \geq 1$. Consider a simple class of algorithms that outputs constantly $\theta_t = \theta'$ for some $\theta' < 1$. With the linear interval construction function, the prediction intervals are then $\hat{C}_t(\theta_t) = [-\theta', \theta']$. The regret is given by $\mathrm{Reg}(T) = 2T\alpha(1-\theta')$, which approaches zero as $\theta'$ approaches 1. The empirical coverage is, however, always zero. In other words, the regret can be arbitrarily close to zero while at the same time the empirical coverage does not approach the desired level. 
+
+These simple examples illustrate that, unfortunately, bounds on the coverage error and bounds on the regret are not in general interchangeable. It is possible, however, to show equivalencies by either (1) making distributional assumptions on the data or (2) using additional information about how the algorithm produces the iterates $\theta_t$.
+
+It may also be informative to summarize a set of prediction intervals in ways beyond their coverage error or by their regret. A common metric for prediction intervals is the _mean interval width_:
+$$
+\begin{aligned}
+  \mathrm{MeanWidth}(T) := \frac{1}{T} \sum_{t=1}^T w_t,
+\end{aligned}
+$$
+where $w_t := u_t - \ell-t$ is the interval width at time $t$. Finally, we introduce a metric that is intended to capture pathological behavior that can arise with ACI algorithms where the prediction intervals oscillate between being extremely narrow and extremely wide. Define the _path length_ of prediction intervals generated by an ACI algorithm as
+$$
+\begin{aligned}
+  \mathrm{PathLength}(T) := \sum_{t=2}^T |w_t - w_{t-1}|.
+\end{aligned}
+$$
+A high path length indicates that the prediction intervals were variable over time, and a low path length indicates the prediction intervals were stable. 
+
+# Algorithms {#sec-algorithms}
+In this section we describe five ACI algorithms and summarize the theoretical guarantees that have been proven for each one. We have harmonized the algorithm descriptions to use a common structure and notation, in some cases departing from their original descriptions.
+
+As a simple running example to illustrate each algorithm, we simulate $T = 500$ values $y_1, \dots, y_T$ following
+$$
+y_t \sim N(0, 0.2^2), \quad t \in \llbracket T \rrbracket.
+$$
+For demonstration purposes we assume to have access to unbiased predictions $\hat{\mu}_t = 0$ for all $t$.
+
+```{r example_setup, echo = FALSE}
+library(AdaptiveConformal)
+set.seed(15321)
+N <- 5e2
+mu <- rep(0, N)
+muhat <- mu
+y <- rnorm(N, mean = mu, sd = 0.2)
+```
+
+## Adaptive Conformal Inference (ACI)
+
+::: {#fig-algo-aci fig-align=left fig-pos=H}
+```{.pseudocode}
+\begin{algorithmic}
+\State \textbf{Input:} starting value $\theta_1$, learning rate $\gamma > 0$.
+\For{$t = 1, 2, \dots, T$}
+  \State \textbf{Output} prediction interval $\hat{C}_t(\theta_t)$.
+  \State Observe $y_t$.
+  \State Set $\mathrm{err}_t = \mathbb{I}[y_t \not\in \hat{C}_t(\theta_t)]$.
+  \State Update $\theta_{t+1} = \theta_t + \gamma (\mathrm{err}_t - (1 - \alpha))$.
+\EndFor
+\end{algorithmic}
+```
+Adaptive Conformal Inference algorithm [@gibbs2021adaptive].
+:::
+
+The original ACI algorithm (@fig-algo-aci) adaptively adjusts the width of the prediction intervals in response to the observations [@gibbs2021adaptive]. The updating rule for the estimated radius can be derived as an online subgradient descent scheme. The subgradient of the pinball loss function with respect to $\theta$ is given by
+$$
+\begin{aligned}
+  \nabla L^\alpha(\theta_t, r_t) &= \begin{cases}
+    \alpha - 1, & r_t < \theta, \\
+    \alpha, &\theta < r_t, \\
+    [\alpha - 1, \alpha], &\theta = r_t
+  \end{cases} \\
+\end{aligned}
+$$
+It follows that, for all $\theta_t \in \mathbb{R}$ and $r_t \in \mathbb{R}$,
+$$
+\alpha - 1 + \mathrm{err}_t \in \nabla L^\alpha(\theta_t, r_t).
+$$
+This leads to the following update rule for $\theta$ based on subgradient descent:
+$$
+\begin{aligned}
+  \theta_{t+1} = \theta_{t} + \gamma (\mathrm{err}_t - (1 - \alpha)),
+\end{aligned}
+$$
+where $\gamma > 0$ is a user-specified learning rate. For intuition, note that if $y_t$ fell outside of the prediction interval at time $t$ ($\mathrm{err}_t = 1$) then the next interval is widened ($\theta_{t+1} = \theta_t + \gamma \alpha$). On the other hand, if $y_t$ fell within the interval ($\mathrm{err}_t = 0$) then the next interval is shortened ($\theta_{t+1} = \theta_t - \gamma(1 - \alpha)$). The learning rate $\gamma$ controls how fast the width of the prediction intervals change in response to the data. 
+
+### Theoretical Guarantees
+Standard results for online subgradient descent yield the following regret bound with the use of the linear interval constructor, assuming that the true radii are bounded by $D$:
+$$
+\mathrm{Reg}(T) \leq \mathcal{O}(D^2 / \gamma + \gamma T) \leq \mathcal{O}(D \sqrt{T}),
+$$
+where the second inequality follows if the optimal choice of $\gamma = D/\sqrt{T}$ is used [@bhatnagar2023saocp]. In addition, a finite sample bound on the coverage error can be established [@gibbs2021adaptive]:
+$$
+|\mathrm{CovErr}(T)| \leq \frac{D + \gamma}{\gamma T}.
+$$
+
+### Tuning Parameters
+The only tuning parameter is the learning rate $\gamma$. Setting $\gamma$ too small will lead to intervals that do not adapt fast enough to distribution shifts, and setting $\gamma$ too large will lead to intervals with large oscillations as seen in @fig-aci. This is quantified in the path lengths, which increase significantly as $\gamma$ increases, even though the empirical coverage remains near the desired value. Thus, choosing a good value for $\gamma$ is essential. However, the optimal choice $\gamma = D / \sqrt{T}$ cannot be used directly in practice unless the time series length $T$ is fixed in advance, or the so called "doubling trick" is used to relax the need to know $T$ in advance [@cesabianchi2006games].
+
+```{r aci_example_plot, echo = FALSE}
+#| label: fig-aci
+#| fig-height: 4.5
+#| fig-cap: "Example prediction intervals from the ACI algorithm for different choices of learning rate $\\gamma$."
+alpha <- 0.8
+results <- list(
+  aci(y, muhat, alpha = alpha, method = "ACI", parameters = list(interval_constructor = "linear", gamma = 0.01)),
+  aci(y, muhat, alpha = alpha, method = "ACI", parameters = list(interval_constructor = "linear", gamma = 0.05)),
+  aci(y, muhat, alpha = alpha, method = "ACI", parameters = list(interval_constructor = "linear", gamma = 0.1)),
+  aci(y, muhat, alpha = alpha, method = "ACI", parameters = list(interval_constructor = "linear", gamma = 0.25))
+)
+
+coverage <- scales::percent_format()(unlist(lapply(results, function(result) result$metrics$coverage)))
+path_length <- scales::number_format(accuracy = 0.1)(unlist(lapply(results, function(result) result$metrics$path_length)))
+mean_width <- scales::number_format(accuracy = 0.01)(unlist(lapply(results, function(result) result$metrics$mean_width)))
+
+par(mfrow = c(2, 2), mar = c(3, 3, 2, 1))
+for(i in 1:4) {
+  plot(results[[i]], legend = FALSE, predictions = FALSE, cex = 0.5, main = bquote(gamma==.(results[[i]]$parameters$gamma)), ylim = c(-0.9, 0.8))
+  text(x = -10, y = -0.75, labels = bquote(EmpCov == .(coverage[[i]]) ), pos = 4)
+  text(x = -10, y = -0.9, labels = bquote(PathLength == .(path_length[[i]]) ), pos = 4)
+}
+par(mfrow = c(1, 1), mar = c(5.1, 4.1, 4.1, 2.1))
+```
+
+## Aggregated Adaptive Conformal Inference (AgACI)
+::: {#fig-algo-agaci fig-align=left fig-pos=H}
+```{.pseudocode}
+\begin{algorithmic}
+  \State \textbf{Input:} candidate learning rates $\{ \gamma_k \}_{1 \leq k \leq K }$, starting value $\theta_1$.
+  \State Initialize BOA algorithms $\mathcal{B}^\ell$ and $\mathcal{B}^u$.
+  \For{$k = 1, \dots, K$}
+    \State Initialize ACI $\mathcal{A}_k = \texttt{ACI}(\alpha \leftarrow \alpha, \gamma \leftarrow \gamma_k, \theta_1 \leftarrow \theta_1)$.
+  \EndFor
+  \For{$t = 1, 2, \dots, T$}
+    \For{$k = 1, \dots, K$}
+      \State Generate candidate prediction interval $[\ell^k_{t}, u^k_{t}]$ from $\mathcal{A}_k$.
+    \EndFor
+    \State Compute aggregated lower and upper bounds $\tilde{\ell}_t$ and $\tilde{u}_t$ using $\mathcal{B}^\ell$ and $\mathcal{B}^u$.
+    \State \textbf{Output} prediction interval $[\tilde{\ell}_t, \tilde{u}_t]$.
+    \State Observe $y_t$.
+    \For{$k = 1, \dots, K$}
+      \State Update ACI $\mathcal{A}_k$ with $y_t$.
+    \EndFor
+    \State Update $\mathcal{B}^\ell$ with lower bounds $\ell^k_t$, $k = 1, \dots, K$ and observed outcome $y_t$. 
+    \State Update $\mathcal{B}^u$ with upper bounds $u^k_t$, $k = 1, \dots, K$ and observed outcome $y_t$. 
+  \EndFor
+\end{algorithmic}
+```
+Aggregated Adaptive Conformal Inference (AgACI) algorithm [@zaffran2022agaci].
+:::
+
+The Aggregated ACI (AgACI; @fig-algo-agaci) algorithm solves the problem of choosing a learning rate for ACI by running multiple copies of the algorithm with different learning rates, and then combining their predictions using an online aggregation of experts algorithm [@zaffran2022agaci]. We follow the AgACI paper in using the Bernstein Online Aggregation (BOA) algorithm as implemented in the `opera` R package [@wintenberger2017boa; @opera2023].
+
+### Theoretical Gaurantees
+AgACI departs from our main theoretical framework in that it does not yield a set of iterates $\theta_1, \dots, \theta_T$ which are used to form prediction intervals using a set construction function $\hat{C}_t$. Rather, the upper and lower bounds from a set of candidate ACI algorithms are aggregated separately. Thus, theoretical results such as regret bounds in terms of $\theta$ similar to those for the other algorithms are not available. It would be possible, however, to establish regret bounds for the pinball loss applied separately to the lower and upper bounds of the prediction intervals. It's not clear, however, how to convert such regret bounds into a coverage bound.
+
+### Tuning Parameters
+The only tuning parameter for AgACI is the set of candidate learning rates. Beyond necessitating additional computational time, there isn't a drawback to having a large grid. As a basic check, we can also look at the weights assigned to each of the learning rates. If large weights are given to the smallest or largest learning rates, it is a sign that smaller (or larger) learning rates would perform well.
+
+```{r agaci_example_plot, echo = FALSE}
+#| label: fig-agaci
+#| fig-height: 4.5
+#| fig-cap: "Aggregated Adaptive Conformal Inference (AgACI) using the linear interval construction function and with initialization $\\theta_1 = 0$."
+result <- aci(y, muhat, alpha = alpha, method = "AgACI", parameters = list(interval_constructor = "linear"))
+coverage <- scales::percent_format()(result$metrics$coverage)
+path_length <- scales::number_format(accuracy = 0.1)(result$metrics$path_length)
+plot(result, ylim = c(-0.9, 0.8), legend = FALSE)
+text(x = -10, y = -0.75, labels = bquote(EmpCov == .(coverage) ), pos = 4)
+text(x = -10, y = -0.9, labels = bquote(PathLength == .(path_length) ), pos = 4)
+```
+
+## Fully Adaptive Conformal Inference (FACI)
+::: {#fig-algo-faci fig-align=left fig-pos=H}
+```{.pseudocode}
+\begin{algorithmic}
+\State \textbf{Input:} starting value $\theta_1$, candidate learning rates $\{ \gamma_k \}_{1 \leq k \leq K }$, parameters $\sigma, \eta$.
+\For{$k = 1, \dots, K$}
+  \State Initialize expert $\mathcal{A}_k = \texttt{ACI}(\alpha \leftarrow \alpha, \gamma \leftarrow \gamma_k, \theta_1 \leftarrow \theta_1)$.
+\EndFor
+\For{$t = 1, 2, \dots, T$}
+  \State Define $p_t^k := w_t^k / \sum_{i=1}^K w_t^i$, for all $1 \leq k \leq K$.
+  \State Set $\theta_t = \sum_{k=1}^K \theta_t^k p_t^k$.
+  \State \textbf{Output} prediction interval $\hat{C}_t(\theta_t)$.
+  \State Observe $y_t$ and compute $r_t$.
+  \State $\bar{w}_{t}^k \gets w_t^k \exp(-\eta L^\alpha(\theta_t^k, r_t))$, for all $1 \leq k \leq K$.
+  \State $\bar{W}_t \gets \sum_{i=1}^K \bar{w}_t^i$.
+  \State $w_{t+1}^k \gets (1 - \sigma) \bar{w}_t^k + \bar{W}_t \sigma / K$.
+  \State Set $\mathrm{err}_t := \mathbb{I}[y_t \not\in \hat{C}_t(\theta_t)]$.
+  \For{$k = 1, \dots, K$}
+    \State Update ACI $\mathcal{A}_k$ with $y_t$ and obtain $\theta_{t+1}^k$.
+  \EndFor
+\EndFor
+\end{algorithmic}
+```
+Fully Adaptive Conformal Inference (FACI) algorithm [@gibbs2022faci].
+:::
+
+The Fully Adaptive Conformal Inference method also aggregates predictions from multiple copies of ACI run with different learning rates, but differs from AgACI in that it aggregates the estimated radii emitted from each algorithm based on their pinball loss [@gibbs2022faci]. FACI uses the aggregation scheme proposed in [@gradu2022adaptive].
+
+
+### Theoretical Guarantees
+Let $\gamma_{\mathrm{max}} = \max_{1 \leq k \leq K} \gamma_k$ and assume that $\gamma_1 < \gamma_2 < \cdots < \gamma_K$ with $\gamma_{k+1}/\gamma \leq 2$ for all $1 \leq k < K$. Then, for any interval $I = [r, s] \subseteq \llbracket T \rrbracket$ and any sequence $\theta_r^*, \dots, \theta_s^*$, 
+$$
+\begin{aligned}
+  \frac{1}{|I|} \sum_{t=r}^s \mathbb{E}[L^\alpha(\theta_t, r_t)] - \frac{1}{|I|} \sum_{t=r}^s \leq& \frac{\log(k / \sigma) + 2\sigma|I|}{\eta |I|} + \frac{\eta}{|I|} \sum_{t=r}^s \mathbb{E}[L^\alpha(\theta_t, r_t)^2] \\
+  &+ 2\sqrt{3}(1 + \gamma_{\mathrm{max}})^2 \max\left\{ \sqrt{\frac{\sum_{t=r+1}^s |\beta_t^* - \beta_{t-1}^*}{|I|}}, \gamma_1 \right\},
+\end{aligned}
+$$
+where the expectation is over the randomness in the randomized version of the algorithm. 
+To convert the regret bound to a coverage bound, the authors took the path of making a distributional assumption on the radii $r_t$. Specifically, they assume that each of the conditional laws of $r_t | \{ r_s \}_{s < t}$ have a density that is bounded below by $p > 0$. For any interval $[s, r] := I \subseteq \llbracket T \rrbracket$ and any sequence $\theta_t^*$, $s \leq t \leq r$:
+$$
+\begin{aligned}
+  \frac{1}{|I|} \sum_{t=r}^s \frac{p \mathbb{E}[(\theta_t - \theta^*_t)^2]}{2} \leq O\left( \sqrt{\frac{\log(|I|)}{|I|}} \right) + O\left( \sqrt{\frac{\sum_{t=r+1}^s |\theta_t^* - \theta_{t-1}^*|}{|I|}} \right).
+\end{aligned}
+$$
+The term $\sum_{t=r+1}^s | \theta_t^* - \theta_{t-1}^*|$ is a path length providing a scalar summary of the degree of distribution shift in the data. 
+
+It has also been pointed out that FACI has the following strongly-adaptive regret bound [@bhatnagar2023saocp]:
+$$
+\begin{aligned}
+  \mathrm{SAReg}(T, k) \leq \widetilde{\mathcal{O}}(D^2 / \gamma + \gamma k).
+\end{aligned}
+$$
+If $k$ is taken as fixed, then choosing $\gamma = D/\sqrt{k}$ yields a strongly adaptive regret bound of order $\widetilde{\mathcal{O}}(D \sqrt{k})$ (for a single choice of $k$). 
+
+### Tuning parameters
+The parameter $|I|$, the time interval of interest, can be chosen arbitrarily. For the tuning parameter $\sigma$, the authors suggest the optimal choice $\sigma = 1 / (2 |I|)$. Choosing $\eta$ is more difficult. The authors suggest the following choice for $\eta$, which is optimal if there is no distribution shift:
+$$
+\begin{aligned}
+  \eta = \sqrt{\frac{3}{|I|}} \sqrt{\frac{\log(K \cdot |I|) + 2}{(\alpha)^2 (1 - \alpha)^3 + (1-\alpha)^2 \alpha^3 }}
+\end{aligned}.
+$$
+Note that this choice is optimal only for the conformal interval constructor, for which $\theta_t$ is a quantile of previous conformity scores. As an alternative, the authors point out that $\eta$ can be learned in an online fashion using the update rule
+$$
+\begin{aligned}
+  \eta_t := \sqrt{\frac{\log(|I| K) + 2}{\sum_{s=t-|I|}^{t-1} L^\alpha(\theta_s, r_s)}}.
+\end{aligned}
+$$
+Both ways of choosing $\eta$ led to very similar results in the original author's empirical studies. In the `AdaptiveConformal` package, the first approach is used when the conformal interval construction function is chosen, and the latter approach for the linear interval construction function.
+
+```{r faci_example_plot, echo = FALSE}
+#| label: fig-faci-linear
+#| fig-height: 4.5
+#| fig-cap: "Example prediction intervals generated by the FACI algorithm."
+gamma_grid <- c(0.05, 0.25, 0.05)
+result <- aci(y, muhat, alpha = alpha, method = "FACI", parameters = list(gamma_grid = gamma_grid, interval_constructor = "linear"))
+coverage <- scales::percent_format()(result$metrics$coverage)
+path_length <- scales::number_format(accuracy = 0.1)(result$metrics$path_length)
+
+plot(result, ylim = c(-0.9, 0.8), legend = FALSE)
+text(x = -10, y = -0.75, labels = bquote(EmpCov == .(coverage) ), pos = 4)
+text(x = -10, y = -0.9, labels = bquote(PathLength == .(path_length)), pos = 4)
+```
+
+## Scale-Free Online Gradient Descent (SF-OGD)
+::: {#fig-algo-sfogd fig-align=left fig-pos=H}
+```{.pseudocode}
+\begin{algorithmic}
+\State \textbf{Input:} starting value $\theta_1$, learning rate $\gamma > 0$.
+\For{$t = 1, 2, \dots, T$}
+  \State \textbf{Output} prediction interval $\hat{C}_t(\theta_t)$. 
+  \State Observe $y_t$ and compute $r_t$. 
+  \State Update $\theta_{t+1} = \theta_t - \gamma \frac{\nabla L^\alpha(\theta_t, r_t)}{\sqrt{\sum_{i=1}^t} \| \nabla L^\alpha(\theta_i, r_i) \|_2^2}$.
+\EndFor
+\end{algorithmic}
+```
+Scale-Free Online Gradient Descent (SF-OGD) algorithm [@orabona2018sfogd; @bhatnagar2023saocp].
+:::
+
+Scale-Free Online Gradient Descent is a general algorithm for online learning proposed by @orabona2018sfogd. The algorithm updates $\theta_t$ with a gradient descent step where the learning rate adapts to the scale of the observed gradients. SF-OGD was first used in the context of ACI as a sub-algorithm for SAOCP (described in the next section). However, it was found to have good performance by itself [@bhatnagar2023saocp] in real-world tasks, so we have made it available in the package as a stand-alone algorithm. 
+
+
+### Theoretical Guarantees
+The SF-OGD algorithm has the following regret bound, which is called an _anytime regret bound_ because it holds for all $t \in \llbracket T \rrbracket$ [@bhatnagar2023saocp]:
+$$
+\begin{aligned}
+  \mathrm{Reg}(t) \leq \mathcal{O}(D \sqrt{t}) \text{ for all } t \in \llbracket T \rrbracket.
+\end{aligned}
+$$
+A bound for the coverage error has also been established [@bhatnagar2023saocp]. For any learning rate $\gamma = \Theta(D)$ (where $\gamma = D / \sqrt{3}$ is optimal) and any initialization $\theta_1 \in [0, D]$, then it holds that for any $T > 1$,
+$$
+\begin{aligned}
+  |\mathrm{CovErr}(T)| \leq \mathcal{O}\left( (1 - \alpha)^{-2} T^{-1/4} \log T \right).
+\end{aligned}
+$$
+
+### Tuning parameters
+[@fig-sf-ogd] compares results for several choices of $\gamma$ to illustrate its effect. The optimal choice of learning rate is $\gamma = D / \sqrt{3}$, where $D$ is the maximum possible radius. When $D$ is not known, it can be estimated by using an initial subset of the time series as a calibration set and estimating $D$ as the maximum of the absolute residuals of the observations and the predictions [@bhatnagar2023saocp]. 
+
+```{r sfogd_example_plot, echo = FALSE}
+#| label: fig-sf-ogd
+#| fig-height: 4.5
+#| fig-cap: "Example prediction intervals generated by the SF-OGD algorithm with different values of the maximum radius tuning parameter $D$."
+alpha <- 0.8
+results <- list(
+  aci(y, muhat, alpha = alpha, method = "SF-OGD", parameters = list(gamma = 0.01)),
+  aci(y, muhat, alpha = alpha, method = "SF-OGD", parameters = list(gamma = 0.1)),
+  aci(y, muhat, alpha = alpha, method = "SF-OGD", parameters = list(gamma = 0.25)),
+  aci(y, muhat, alpha = alpha, method = "SF-OGD", parameters = list(gamma = 0.5))
+)
+
+coverage <- scales::percent_format()(unlist(lapply(results, function(result) result$metrics$coverage)))
+path_length <- scales::number_format(accuracy = 0.1)(unlist(lapply(results, function(result) result$metrics$path_length)))
+
+par(mfrow = c(2, 2), mar = c(3, 3, 2, 1))
+for(i in 1:4) {
+  plot(results[[i]], legend = FALSE, predictions = FALSE, cex = 0.5, main = bquote(gamma==.(results[[i]]$parameters$gamma)), ylim = c(-0.9, 0.8))
+  text(x = -10, y = -0.75, labels = bquote(EmpCov == .(coverage[[i]]) ), pos = 4)
+  text(x = -10, y = -0.9, labels = bquote(PathLength == .(path_length[[i]])), pos = 4)
+}
+par(mfrow = c(1, 1), mar = c(5.1, 4.1, 4.1, 2.1))
+```
+
+## Strongly Adaptive Online Conformal Prediction (SAOCP)
+::: {#fig-algo-saocp fig-align=left fig-pos=H}
+```{.pseudocode}
+\begin{algorithmic}
+\State \textbf{Input:} initial value $\theta_0$, learning rate $\gamma > 0$.
+\For{$t = 1, 2, \dots, T$}
+  \State Initialize expert $\mathcal{A}_t = \texttt{SF-OGD}(\alpha \leftarrow \alpha, \gamma \leftarrow \gamma, \theta_1 \leftarrow \theta_{t-1})$, set weight $w_t^t = 0$.
+  \State Compute active set $\mathrm{Active}(t) = \{ i \in \llbracket T \rrbracket : t - L(i) < i \leq t \}$.
+  \State Compute prior probability $\pi_i \propto i^{-2} (1 + \lfloor \log_2 i \rfloor )^{-1} \mathbb{I}[i \in \mathrm{Active}(t)]$.
+  \State Compute un-normalized probability $\hat{p}_i = \pi_i [w_{t,i}]_+$ for all $i \in \llbracket t \rrbracket$.
+  \State Normalize $p = \hat{p} / \| \hat{p} \|_1 \in \Delta^t$ if $\| \hat{p} \|_1 > 0$, else $p = \pi$.
+  \State Set $\theta_t = \sum_{i \in \mathrm{Active}(t)} p_i \theta_t^i$ (for $t \geq 2$), and $\theta_t = 0$ for $t = 1$.
+  \State \textbf{Output} prediction set $\hat{C}_t(\theta_t)$.
+  \State Observe $y_t$ and compute $r_t$. 
+  \For{$i \in \mathrm{Active}(t)$}
+    \State Update expert $\mathcal{A}_t$ with $y_t$ and obtain $\theta_{t+1}^i$.
+    \State Compute $g_t^i = \begin{cases}
+      \frac{1}{D}\left(L^\alpha(\theta_t, r_t) - L^\alpha(\theta_t^i, r_t)\right) & w_t^i > 0 \\
+      \frac{1}{D}\left[L^\alpha(\theta_t, r_t) - L^\alpha(\theta_t^i, r_t))\right]_+ & w_t^i \leq 0 \\
+    \end{cases}$.
+    \State Update expert weight $w_{t+1}^i = \frac{1}{t - i + 1}\left( \sum_{j=i}^t g_j^i \right) \left(1 + \sum_{j=i}^t w_j^i g_j^i \right)$.
+  \EndFor
+\EndFor
+\end{algorithmic}
+```
+Strongly Adaptive Online Conformal Prediction (SAOCP) algorithm [@bhatnagar2023saocp]. 
+:::
+
+The Strongly Adaptive Online Conformal Prediction algorithm maintains a library of candidate online learning algorithms that generate prediction intervals which are then aggregated using a meta-algorithm [@bhatnagar2023saocp]. The candidate algorithm was chosen to be SF-OGD, although any algorithm that features anytime regret guarantees can be chosen. As opposed to AgACI and FACI, in which each candidate has a different learning rate, here each candidate has the same learning rate but is active over a different interval. At each time point, a new expert is instantiated which is active over a finite lifetime. Define the _lifetime_ of an expert instantiated at time $t$ as 
+$$
+\begin{aligned}
+  L(t) := g \cdot \max_{n \in \mathbb{Z}} \{ 2^n t \equiv 0 \mod 2^n \},
+\end{aligned}
+$$
+where $g \in \mathcal{Z}^*$ is a _lifetime multiplier_ parameter. The active experts are weighted according to their empirical performance with respect to the pinball loss function. 
+
+### Theoretical Guarantees
+The following bound for the strongly adaptive regret holds for all lengths $k \in \llbracket T \rrbracket$ [@bhatnagar2023saocp]:
+$$
+\begin{aligned}
+  \mathrm{SAReg}(T, k) \leq 15 D \sqrt{k(\log T + 1)} \leq \tilde{\mathcal{O}}(D \sqrt k).
+\end{aligned}
+$$
+It should be emphasized that this regret bounds holds simultaneously across all $k$, as opposed to FACI, where a similar bound holds only for a single $k$. A bound on the coverage error of SAOCP has also been established  as:
+$$
+\begin{aligned}
+  |\mathrm{CovErr}(T)| \leq \mathcal{O}\left(\inf_\beta(T^{1/2 - \beta} + T^{\beta - 1} S_\beta(T))\right).
+\end{aligned}
+$$
+where $S_{\beta}(T)$ is a technical measure of the smoothness of the cumulative gradients and expert weights for each of the candidate experts [@bhatnagar2023saocp].
+
+### Tuning Parameters
+The main tuning parameter for SAOCP is the learning rate $\gamma$ of the SF-OGD sub-algorithms, which we saw in the previous section has for optimal choice $\gamma = D / \sqrt{3}$. Values for $D$ that are too low lead to intervals that adapt slowly, and values that are too large lead to jagged intervals. In their experiments, the authors select a value for $D$ by picking the maximum residual from a calibration set. The second tuning parameter is the lifetime multiplier $g$ which controls the lifetime of each of the experts. We follow the original paper in setting $g = 8$.
+
+```{r saocp_example_plot, echo = FALSE}
+#| label: fig-saocp
+#| fig-height: 4.5
+#| fig-cap: "Example of prediction intervals generated by the SAOCP algorithm with different values of the maximum radius parameter $D$."
+alpha <- 0.8
+results <- list(
+  aci(y, muhat, alpha = alpha, method = "SAOCP", parameters = list(D = 0.01)),
+  aci(y, muhat, alpha = alpha, method = "SAOCP", parameters = list(D = 0.1)),
+  aci(y, muhat, alpha = alpha, method = "SAOCP", parameters = list(D = 0.25)),
+  aci(y, muhat, alpha = alpha, method = "SAOCP", parameters = list(D = 0.5))
+)
+
+coverage <- scales::percent_format()(unlist(lapply(results, function(result) result$metrics$coverage)))
+path_length <- scales::number_format(accuracy = 0.1)(unlist(lapply(results, function(result) result$metrics$path_length)))
+
+par(mfrow = c(2, 2), mar = c(3, 3, 2, 1))
+for(i in 1:4) {
+  plot(results[[i]], legend = FALSE, predictions = FALSE, cex = 0.5, main = bquote(D==.(results[[i]]$parameters$D)), ylim = c(-0.9, 0.8))
+  text(x = -10, y = -0.75, labels = bquote(EmpCov == .(coverage[[i]])), pos = 4)
+  text(x = -10, y = -0.9, labels = bquote(PathLength == .(path_length[[i]])), pos = 4)
+}
+par(mfrow = c(1, 1), mar = c(5.1, 4.1, 4.1, 2.1))
+```
+
+# Simulation Study {#sec-simulations}
+We present two empirical studies in order to compare the performance of the ACI algorithms in simple simulated datasets. For both simulations we targeted empirical coverage of $\alpha = 0.8$, $\alpha = 0.9$, and $\alpha = 0.95$.
+
+## Time series with ARMA errors
+In this simulation we reproduce the setup described in @zaffran2022agaci (itself based on that of @friedman1983). The time series values $y_t$ for $t = 1, \dots, 600$ are simulated according to
+$$
+\begin{aligned}
+  y_t = 10\sin(\pi X_{t,1}X_{t,2}) + 20(X_{t,3} - 0.5)^2 + 10X_{t,4} + 5 X_{t,5} + 0X_{t,6} + \epsilon_t,
+\end{aligned}
+$$
+where $X_{t,i}$, $i = 1, \dots, 6$ are uniformly distributed on $[0, 1]$. The noise terms $\epsilon_t$ are generated according to an ARMA(1, 1) process:
+$$
+\begin{aligned}
+  \epsilon_t &= \psi \epsilon_{t-1} + \xi_t + \theta \xi_{t-1}, \\
+  \xi_t &\sim N(0, \sigma^2).
+\end{aligned}
+$$
+We set $\psi$ and $\theta$ jointly to each value in $\{ 0.1, 0.8, 0.9, 0.95, 0.99 \}$ to simulate time series with increasing temporal dependence. The innovation variance was set to $\sigma^2 = (1 - \psi^2) / (1 + 2\psi \xi + \xi^2)$. For each setting, 25 simulated datasets were generated.
+
+To provide point predictions for the ACI algorithms, at each time $t \geq 200$ a random forest model was fitted to the previously observed data using the `ranger` R package [@wright2017ranger]. The estimated model was then used to predict the subsequent time point. The maximum radius $D$ was estimated as the maximum residual observed between time points $t=200$ and $t=249$. The ACI models were then executed starting at time point $t = 250$. All metrics are based on time points $t \geq 300$ to allow time for the ACI methods to initialize. 
+
+```{r simulation_study_one, cache = TRUE}
+simulate <- function(seed, psi, xi, N = 1e3) {
+  set.seed(seed)
+  
+  s <- 10
+  innov_scale <- sqrt(s * (1 - psi^2) / (1 + 2 * psi * xi + xi^2))
+  
+  X <- matrix(runif(6 * N), ncol = 6, nrow = N)
+  colnames(X) <- paste0("X", 1:6)
+  
+  epsilon <- arima.sim(n = N, model = list(ar = psi, ma = xi), sd = innov_scale)
+  
+  mu <- 10 * sin(pi * X[,1] * X[,2]) + 20 * (X[,3] - 0.5)^2 + 10 * X[,4] + 5 * X[,5]
+  y <- mu + epsilon
+  as_tibble(X) %>% mutate(y = y)
+}
+
+estimate_model <- function(data, p = NULL) {
+  if(!is.null(p)) p()
+  preds <- numeric(nrow(data))
+  for(t in 200:nrow(data)) {
+    model <- ranger::ranger(y ~ X1 + X2 + X3 + X4 + X5 + X6, data = data[1:(t - 1),])
+    preds[t] <- predict(model, data = data[t, ])$predictions
+  }
+  preds
+}
+
+metrics <- function(fit) {
+  indices <- 300:length(fit$Y)
+  aci_metrics(fit, indices)
+}
+
+fit <- function(data, preds, method, alpha, p = NULL) {
+  if(!is.null(p)) p()
+  
+  D <- max(abs(data$y - preds)[200:249])
+  gamma <- ifelse(method == "ACI", D / sqrt(length(250:nrow(data))), D / sqrt(3))
+  
+  parameters <- list(interval_constructor = "linear", D = D, gamma = gamma, gamma_grid = seq(0.1, 1, 0.1))
+  aci(data$y[250:nrow(data)], preds[250:nrow(data)], method = method, alpha = alpha, parameters = parameters)
+}
+
+N_sims <- 25
+simulation_data <- expand_grid(
+  index = 1:N_sims,
+  param =  c(0.1, 0.8, 0.9, 0.95, 0.99),
+  N = 600
+) %>%
+  mutate(psi = param, xi = param)
+
+# For each simulated dataset, fit multiple ACI methods
+simulation_study_setup <- expand_grid(
+  alpha = c(0.8, 0.9, 0.95),
+  method = c("ACI", "AgACI", "SF-OGD", "SAOCP", "FACI")
+)
+
+simulation_study1 <- run_simulation_study1(
+  simulation_data,
+  simulation_study_setup,
+  estimate_model,
+  fit,
+  workers = 8
+)
+
+```
+
+The coverage error, mean interval width, and path lengths of each of the algorithms for $\alpha = 0.9$ are shown in @fig-simulation-one-results (results for $\alpha \in \{ 0.8, 0.95 \}$ were similar and are available in the appendix). All methods achieved near optimal empirical coverage, although SAOCP tended to slightly undercover. The mean interval widths were similar across methods, although again SAOCP had slightly shorter intervals (as expected given its tendency to under cover). The path length of SAOCP was larger than any of the other methods. To investigate why, @fig-simulation-one-example plots $w_t - w_{t-1}$, the difference in interval width between times $t-1$ and $t$, for each method in one of the simulations. The interval widths for ACI, AgACI, and FACI change slowly relative to those for SF-OGD and SAOCP. For SAOCP, we can see the interval widths have larger fluctuations than the other methods, explaining its higher path width. 
+
+```{r simulation_one_plot, message=FALSE, warning=FALSE}
+#| label: fig-simulation-one-results
+#| fig-height: 5.5
+#| fig-cap: "Coverage errors, mean interval widths, and path lengths for the first simulation study with target coverage $\\alpha = 0.9$."
+
+simulation_one_plot(simulation_study1$results %>% filter(alpha == 0.9))
+```
+
+```{r simulation_one_example_plot}
+#| label: fig-simulation-one-example
+#| fig-height: 6
+#| fig-cap: "Difference in successive interval widths ($w_t - w_{t-1}$) from an illustrative simulation from the first simulation study."
+fits <- simulation_study1$example_fits
+
+par(mfrow = c(3, 2), mar = c(3, 4, 2, 1))
+for(i in 1:5) {
+  plot(
+    diff(fits$fit[[i]]$intervals[,2] - fits$fit[[i]]$intervals[,1]), 
+    main = fits$method[[i]], 
+    xlab = "T", 
+    ylab = expression(w[t] - w[t - 1]))
+}
+par(mfrow = c(1, 1), mar = c(5.1, 4.1, 4.1, 2.1))
+```
+
+## Distribution shift
+This simulation study features time series that feature distribution shifts. The setup is quite simple in order to probe the basic performance of the methods in response to distribution shift. As a baseline, we simulate time series according to
+$$
+\begin{aligned}
+  y_t &\sim N(0, \sigma_t^2), \\
+  \sigma_t &= 0.2,
+\end{aligned}
+$$
+for $t = 1, \dots, T$ and $T = 500$. In the second type of time series, the variance of the observations increases halfway through the time series:
+$$
+\begin{aligned}
+y_t &\sim N(0, \sigma_t^2), \\
+\sigma_t^2 &= 0.2 + 0.5 \mathbb{I}[t > 250]
+\end{aligned}
+$$
+In each case, the ACI algorithms are provided with the unbiased predictions $\hat{\mu}_t = 0$, $t = 1, \dots, T$. 50 simulated datasets were generated for each type of time series.
+
+```{r simulation_two, cache = TRUE}
+simulate <- function(seed, distribution_shift = 0, N = 1e3, sigma = 0.2) {
+  set.seed(seed)
+  mu <- rep(0, N)
+  shift <- 1:N > (N / 2)
+  muhat <- mu
+  y <- rnorm(n = length(mu), mean = mu, sd = sigma + ifelse(shift, distribution_shift, 0))
+  
+  tibble(y = y, muhat = muhat)
+}
+
+metrics <- function(fit) {
+  N <- length(fit$Y)
+  indices <- which(1:N > 50)
+  aci_metrics(fit, indices)
+}
+
+fit <- function(data, method, alpha, p = NULL) {
+  if(!is.null(p)) p()
+  D <- max(abs(data$y - data$muhat)[1:50])
+  
+  if(method == "ACI") {
+    gamma <- D / sqrt(nrow(data))
+  }
+  else {
+    gamma <- D / sqrt(3)
+  }
+  
+  parameters <- list(
+    interval_constructor = "linear", 
+    D = D, 
+    gamma = gamma, 
+    gamma_grid = seq(0.1, 2, 0.1)
+  )
+  
+  aci(data$y, data$muhat, method = method, alpha = alpha, parameters = parameters)
+}
+
+N_sims <- 5e1
+simulation_study_setup2 <- expand_grid(
+  index = 1:N_sims,
+  distribution_shift = c(0, 0.5),
+  alpha = c(0.8, 0.9, 0.95),
+  N = 500,
+  method = c("ACI", "AgACI", "SF-OGD", "SAOCP", "FACI")
+) %>%
+  mutate(data = pmap(list(index, distribution_shift, N), simulate))
+
+simulation_study2 <- run_simulation_study2(simulation_study_setup2, fit, workers = 8)
+```
+
+The coverage error, mean interval widths, and path lengths of each of the algorithms are shown in @fig-simulation-two-results. The coverage error of all the algorithms is near the desired value in the absence of distribution shift. On the contrary, all of the algorithms with the exception of ACI undercover when there is distributional shift. An illustrative example of prediction intervals generated by each ACI method for one of the simulated time series with distribution shift is shown in @fig-simulation-two-example.
+
+```{r simulation_two_plot}
+#| label: fig-simulation-two-results
+#| fig-height: 9
+#| fig-cap: "Coverage error, mean interval width, and path length for $\\alpha = 0.8, 0.9, 0.95$ and simulations with and without distributional shift."
+
+simulation_two_plot(simulation_study2$results)
+```
+
+```{r simulation_two_example_plot}
+#| label: fig-simulation-two-example
+#| fig-height: 6
+#| fig-cap: "Example prediction intervals (target coverage $\\alpha = 0.9$) from the second simulation study of time series with distributional shift."
+fits <- simulation_study2$example_fits
+
+coverage <- scales::percent_format()(unlist(lapply(fits$fit, function(result) result$metrics$coverage)))
+path_length <- scales::number_format(accuracy = 0.1)(unlist(lapply(fits$fit, function(result) result$metrics$path_length)))
+
+par(mfrow = c(3, 2), mar = c(3, 3, 2, 1))
+for(i in 1:5) {
+  plot(fits$fit[[i]], legend = FALSE, main = fits$method[[i]], index = 51:500)
+  text(x = -10, y = -1.5, labels = bquote(EmpCov == .(coverage[[i]]) ), pos = 4)
+  text(x = -10, y = -2, labels = bquote(PathLength == .(path_length[[i]]) ), pos = 4)
+}
+par(mfrow = c(1, 1), mar = c(5.1, 4.1, 4.1, 2.1))
+```
+
+# Case Study: Influenza Forecasting {#sec-case-study}
+Influenza is a highly infectious disease that is estimated to infect ~1 billion individuals each year around the world [@krammer2018influenza]. Influenza incidence in temperate climates tends to follow a seasonal pattern, with the highest number of infections during what is commonly referred to as the \textit{flu season} [@lofgren2007influenza]. Accurate forecasting of influenza is of significant interest to aid in public health planning and resource allocation. To investigate the accuracy of influenza forecasts, The US Centers for Disease Control (CDC) initiated a challenge, referred to as FluSight, in which teams from multiple institutions submitted weekly forecasts of influenza incidence [@biggerstaff2016flusight]. @reich2019influenza evaluated the accuracy of the forecasts over seven flu seasons from 2010 to 2017. As a case study, we investigate the use of ACI algorithms to augment the FluSight forecasts with prediction intervals.
+
+The FluSight challenge collected forecasts for multiple prediction targets. For this case study, we focus on national (US) one-week ahead forecasts of weighted influenza-like illness (wILI), which is a population-weighted percentage of doctors visits where patients presented with influenza-like symptoms [@biggerstaff2016flusight]. The FluSight dataset, which is publicy available, include forecasts derived from 21 different forecasting models, including both mechanistic and statistical approaches [@tushar2018flusightnetwork]. For our purposes, we treat the way the forecasts were produced as a black box.
+
+Formally, let $y_{t}$, $t \in \llbracket T \rrbracket$ be the observed national wILI at time $t$, and let $\hat{\mu}_{j,t}$, $j = \llbracket J \rrbracket$ be the one-week ahead forecast of the wILI from model $j$ at time $t$. Two of the original 21 forecasting methods were excluded from this case study due to poor predictive performance (\texttt{Delphi\_Uniform} and \texttt{CUBMA}). The ACI methods were then applied to the log-observations and log-predictions, where the log-transformation was used to constrain the final prediction intervals to be positive. The first flu season (2010-2011) was used as a warm-up for each ACI method, and we report the empirical performance of the prediction intervals for the subsequent seasons (six seasons from 2012-2013 to 2016-2017). The ACI algorithms target prediction intervals with coverage of $\alpha = 0.8$, $\alpha = 0.9$, and $\alpha = 0.95$. 
+
+```{r case_study, cache = TRUE}
+raw_data <- read_csv("data/point_ests.csv", show_col_types = FALSE)
+
+fit <- function(data, method, alpha) {
+  first_season <- data$Season == "2010/2011"
+  D <- max(abs(data$obs_value - data$Value)[first_season])
+  
+  gamma <- ifelse(method == "ACI", D / sqrt(nrow(data)), D / sqrt(3))
+  
+  parameters <- list(
+    interval_constructor = "linear", 
+    D = D, 
+    gamma = gamma, 
+    gamma_grid = seq(0.01, 1, 0.05)
+  )
+  
+  aci(
+    Y = log(data$obs_value), 
+    predictions = log(data$Value), 
+    method = method, 
+    parameters = parameters, 
+    alpha = alpha
+  )
+}
+
+metrics <- function(data, fit) {
+  aci_metrics(fit, indices = which(data$Season != "2010/2011"))
+}
+
+analysis_data <- raw_data %>%
+  filter(
+    Target == "1 wk ahead", 
+    Location == "US National", 
+    !(model_name %in% c("Delphi_Uniform", "CUBMA"))
+  ) %>%
+  arrange(Year, Model.Week) %>%
+  group_by(model_name) %>%
+  nest() 
+
+fits <- expand_grid(
+  analysis_data, 
+  tibble(method = c("ACI", "AgACI", "FACI", "SF-OGD", "SAOCP")), 
+  tibble(alpha = c(0.8, 0.9, 0.95))
+) %>%
+  mutate(fit = pmap(list(data, method, alpha), fit),
+         metrics = map2(data, fit, metrics))
+
+case_study_results <- fits %>%
+  select(-data, -fit) %>%
+  mutate(metrics = map(metrics, as_tibble)) %>%
+  unnest(c(metrics)) 
+```
+
+The coverage errors, mean interval widths, and path lengths of the prediction intervals for each of the underlying forecast models is shown in @fig-case-study-metrics. In almost all cases the absolute coverage error was less than $0.1$. SF-OGD performed particularly well, with coverage errors close to zero for all forecasting models. Interval widths were similar across methods, with SAOCP slightly shorter. Path Lengths were shorter for ACI and SF-OGD and longer for SAOCP.
+
+```{r case_study_metrics_plot}
+#| label: fig-case-study-metrics
+#| fig-height: 6
+#| fig-cap: "Coverage error, mean interval width, and path lengths of prediction intervals generated with each ACI method based on forecasts from each of the 19 underlying influenza forecasting models."
+
+case_study_plot(case_study_results)
+```
+
+As an illustrative example, in @fig-case-study-example we plot the point forecasts from one of the forecasting models (based on SARIMA with no seasonal differencing) and the associated ACI-generated 90\% prediction intervals for each season from 2011-2017. Interestingly, the forecasts in 2011-2012 underpredicted the observations for much of the season. The algorithm responds by making the intervals wider to cover the observations, and because the intervals are symmetric the lower bound then becomes unrealistically low. A similar phenomenon can be seen in the growth phase of the 2012/2013 season as well.
+
+```{r case_study_example_plot}
+#| label: fig-case-study-example
+#| fig-height: 4
+#| fig-cap: "Example conformal prediction intervals for six flu seasons based on forecasts from a SARIMA type model."
+
+sarima_fits <- fits %>% filter(
+  model_name == "ReichLab_sarima_seasonal_difference_FALSE", 
+  alpha == 0.9
+) %>%
+  mutate(output = map(fit, extract_intervals)) %>%
+  select(method, alpha, data, output) %>%
+  unnest(c(data, output)) %>%
+  filter(Season != "2010/2011")
+
+sarima_fits %>%
+  ggplot(aes(x = Model.Week, y = log(obs_value))) +
+  geom_point(aes(shape = "Observed")) +
+  geom_line(aes(y = pred, lty = "Forecast"), color = "black") +
+  geom_line(aes(y = lower, color = method)) +
+  geom_line(aes(y = upper, color = method)) +
+  facet_wrap(~Season) +
+  labs(
+    x = "Flu Season Week", 
+    y = "log(wILI)", 
+    title = "SARIMA forecasts with ACI 90% prediction intervals"
+  )
+```
+
+# Discussion {#sec-discussion}
+The results of our simulations and case study show that, when tuning parameters are chosen well, Adaptive Conformal Inference algorithms yield well-performing prediction intervals. On the other hand, poor choice of tuning parameters can lead to intervals of very low utility. Furthermore, in some cases the prediction intervals may appear to perform well with respect to metrics like the empirical coverage error, while simultaneously being practically useless. The original ACI algorithm illustrates this phenomena: too small a value of its learning rate $\gamma$ yields prediction intervals that are not reactive enough, and too large yields intervals that change too fast. In both cases, the empirical coverage may appear well-calibrated, while the prediction intervals will not be useful. Thus, the core challenge in designing an ACI algorithm is in finding an optimal level of reactivity for the prediction intervals. As users of these algorithms, the challenge is in finding values for the tuning parametesr that avoid pathological behaviors.
+
+Several of the algorithms investigated in this paper handle the problem of finding an optimal level of reactivity by aggregating prediction intervals generated by a set of underlying ACI algorithms. 
+Our results show the algorithms can perform well in multiple difficult scenarios. However, the overall effect of these approaches is to shift the problem to a higher level of abstraction: we still need to set tuning parameters that control the amount of reactivity, we just do so at a higher level than the original ACI algorithm. It is desirable that these tuning parameters be easily interpretable, with simple strategies available for setting them.  An advantage of the SF-OGD and SAOCP algorithms in this respect are that their main tuning parameter, the maximum radius $D$, is easily interpretable as the maximum possible difference between the input predictions and the truth. It is also straightforward to choose this parameter based on a calibration set, although this strategy does not necessarily work well in cases of distribution shift. We also found that an advantage of the AgACI method is its robustness to the choice of its main tuning parameter, the set of candidate learning rates. Indeed, if AgACI does not perform well, one can simply increase the number of candidate learning rates.  
+
+A key challenge in tuning the algorithms arises in settings of distribution shift, where methods for choosing hyperparameters based on a calibration set from before the distribution shift will likely not perform well. The second simulation study we conducted probed this setting in a simple scenario. We found that several of the methods yielded prediction intervals that had non-optimal empirical coverage. As we picked hyperparameters based on a calibration set formed before the distribution shift, it is not surprising that the resulting tuning parameters are not optimal. This underscores the difficulty in designing  ACI algorithms that can adapt to distribution shifts, and in finding robust methods for choosing hyperparameters. In practice, it is possible the second simulation study does not accurately reflect real-world scenarios. Indeed, the benchmarks presented in [@bhatnagar2023saocp] using the datasets from the M4 competition, and using point predictions generated by diverse prediction algorithms, found that ACI algorithms exhibited good performance in terms of empirical coverage.  Regardless, our recommendation for future papers in this line of research is to include simulation studies for simple distributional shift scenarios as a benchmark. 
+
+Our case study results illustrate the dependence of the ACI algorithms on having access to high-quality point predictions. If the predictions are biased, for example, then the prediction intervals may be able to achieve optimal coverage at the expense of larger interval widths. Using ensemble methods to combine forecasts from several flexible machine-learning models is one strategy that can be used to hedge against model misspecification and improve the quality of forecasts.
+
+There remain many possible extensions of ACI algorithms. The algorithms presented in this work primarily consider symmetric intervals evaluated using the pinball loss function (AgACI can yield asymmetric intervals because the aggregation rule is applied separately to the lower and upper bounds from the underlying experts, but those underlying experts only produce symmetric intervals). A simple extension would switch to using the interval loss function, which would allow for asymmetric intervals where two parameters are learned for the upper and lower bounds, respectively. It may also be of interest to generate prediction intervals that have regret bounds and coverage guarantees for arbitrary subsets of observations (for example, we may seek prediction intervals that have near optimal coverage for every day of the week, or month of the year). Another avenue of theoretical research is to find algorithms with provable bounds for the coverage and regret that do not depend on the outcome being bounded.
+
+_Final wrap up paragraph?_
+
+# References {.unnumbered}
+
+::: {#refs}
+:::
+
+# Appendix
+
+```{r simulation_one_plot_appendix}
+#| fig-cap: "Coverage errors, mean interval widths, and path lengths for the first simulation study with target coverage $\\alpha \\in \\{ 0.8, 0.9, 0.95 \\}$."
+#| fig-height: 9 
+simulation_one_plot(simulation_study1$results)
+```
+
+## Additional R code
+```{r}
+```
