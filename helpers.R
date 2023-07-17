@@ -69,7 +69,7 @@ simulation_two_plot <- function(results) {
     facet_grid(distribution_shift ~ alpha, labeller = labels) +
     labs(x = "", y = expression(CovErr(T)), subtitle = "Coverage Error", 
          title = "Simulation Study: Distribution Shift") +
-    basic_theme +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 90, hjust = 1)) +
     aci_theme
   
   plot_piwidth <- results %>%
@@ -79,8 +79,7 @@ simulation_two_plot <- function(results) {
     facet_grid(distribution_shift ~ alpha, labeller = labels, scales = "free_y") +
     labs(x = "", y = expression(MeanWidth(T)), subtitle = "Mean Interval Width") +
     aci_theme +
-    basic_theme +
-    theme(legend.position = "none")
+    theme(legend.position = "none", axis.text.x = element_text(angle = 90, hjust = 1))
   
   plot_pathlength <- results %>%
     ggplot(aes(x = method,
@@ -88,8 +87,8 @@ simulation_two_plot <- function(results) {
     geom_boxplot() +
     facet_grid(distribution_shift ~ alpha, labeller = labels, scales = "free_y") +
     labs(x = "ACI Method", y = expression(PathLength(T)), subtitle = "Path Length") +
-    aci_theme +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 90, hjust = 1))
+    theme(legend.position = "none", axis.text.x = element_text(angle = 90, hjust = 1)) +
+    aci_theme
   
   plot_coverr / plot_piwidth / plot_pathlength
 }
