@@ -12,15 +12,18 @@
     "AdaptiveConformal": {
       "Package": "AdaptiveConformal",
       "Version": "0.1.0",
-      "Source": "Local",
-      "RemoteType": "local",
-      "RemoteUrl": "/Users/herb/AdaptiveConformal",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "herbps10",
+      "RemoteRepo": "AdaptiveConformal",
+      "RemoteRef": "main",
+      "RemoteSha": "e1a31fbe0c78ee3b7b090235f676c0b6dbfce29f",
       "Requirements": [
-        "R",
         "Rdpack",
         "opera"
       ],
-      "Hash": "ccb1337b99d109d8765b035d536b80a5"
+      "Hash": "b74762d411472d34848d35e1d019b114"
     },
     "DBI": {
       "Package": "DBI",
