@@ -330,3 +330,133 @@ url={https://doi.org/10.1186/s12879-016-1669-x}
   year = {2018},
   howpublished = {\url{https://github.com/FluSightNetwork/cdc-flusight-ensemble}}
 }
+
+@Manual{tibshirani2019ci,
+    title = {conformalInference: Tools for conformal inference in regression},
+    author = {Ryan Tibshirani and Jacopo Diquigiovanni and Matteo Fontana and Paolo Vergottini},
+    year = {2019},
+    note = {R package version 1.1},
+  }
+
+@Manual{diquigiovanni2022fd,
+    title = {conformalInference.fd: Tools for Conformal Inference for Regression in Multivariate
+Functional Setting},
+    author = {Jacopo Diquigiovanni and Matteo Fontana and Aldo Solari and Simone Vantini and Paolo Vergottini},
+    year = {2022},
+    note = {R package version 1.1.1},
+    url = {https://CRAN.R-project.org/package=conformalInference.fd},
+}
+
+@Article{lei2020cfcausal,
+  author = {Lihua Lei and Emmanuel Cand\`es},
+  title = {Conformal Inference of Counterfactuals and Individual Treatment Effects},
+  journal = {Arxiv},
+  year = {2020},
+  url = {https://arxiv.org/abs/2006.06138},
+}
+
+@article{gneiting2007scoring,
+author = {Tilmann Gneiting and Adrian E Raftery},
+title = {Strictly Proper Scoring Rules, Prediction, and Estimation},
+journal = {Journal of the American Statistical Association},
+volume = {102},
+number = {477},
+pages = {359-378},
+year  = {2007},
+publisher = {Taylor & Francis},
+doi = {10.1198/016214506000001437},
+URL = {https://doi.org/10.1198/016214506000001437},
+eprint = {https://doi.org/10.1198/016214506000001437}
+}
+
+@article{makridakis2020m4,
+title = {The M4 Competition: 100,000 time series and 61 forecasting methods},
+journal = {International Journal of Forecasting},
+volume = {36},
+number = {1},
+pages = {54-74},
+year = {2020},
+note = {M4 Competition},
+issn = {0169-2070},
+doi = {https://doi.org/10.1016/j.ijforecast.2019.04.014},
+url = {https://www.sciencedirect.com/science/article/pii/S0169207019301128},
+author = {Spyros Makridakis and Evangelos Spiliotis and Vassilios Assimakopoulos},
+keywords = {Forecasting competitions, M competitions, Forecasting accuracy, Prediction intervals, Time series methods, Machine learning methods, Benchmarking methods, Practice of forecasting},
+abstract = {The M4 Competition follows on from the three previous M competitions, the purpose of which was to learn from empirical evidence both how to improve the forecasting accuracy and how such learning could be used to advance the theory and practice of forecasting. The aim of M4 was to replicate and extend the three previous competitions by: (a) significantly increasing the number of series, (b) expanding the number of forecasting methods, and (c) including prediction intervals in the evaluation process as well as point forecasts. This paper covers all aspects of M4 in detail, including its organization and running, the presentation of its results, the top-performing methods overall and by categories, its major findings and their implications, and the computational requirements of the various methods. Finally, it summarizes its main conclusions and states the expectation that its series will become a testing ground for the evaluation of new methods and the improvement of the practice of forecasting, while also suggesting some ways forward for the field.}
+}
+
+@misc{feldman2023achieving,
+      title={Achieving Risk Control in Online Learning Settings}, 
+      author={Shai Feldman and Liran Ringel and Stephen Bates and Yaniv Romano},
+      year={2023},
+      eprint={2205.09095},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+
+@misc{bastani2022practical,
+      title={Practical Adversarial Multivalid Conformal Prediction}, 
+      author={Osbert Bastani and Varun Gupta and Christopher Jung and Georgy Noarov and Ramya Ramalingam and Aaron Roth},
+      year={2022},
+      eprint={2206.01067},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+
+@InProceedings{xu2021enbpi,
+  title = 	 {Conformal prediction interval for dynamic time-series},
+  author =       {Xu, Chen and Xie, Yao},
+  booktitle = 	 {Proceedings of the 38th International Conference on Machine Learning},
+  pages = 	 {11559--11569},
+  year = 	 {2021},
+  editor = 	 {Meila, Marina and Zhang, Tong},
+  volume = 	 {139},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {18--24 Jul},
+  publisher =    {PMLR},
+  pdf = 	 {http://proceedings.mlr.press/v139/xu21h/xu21h.pdf},
+  url = 	 {https://proceedings.mlr.press/v139/xu21h.html},
+  abstract = 	 {We develop a method to construct distribution-free prediction intervals for dynamic time-series, called \Verb|EnbPI| that wraps around any bootstrap ensemble estimator to construct sequential prediction intervals. \Verb|EnbPI| is closely related to the conformal prediction (CP) framework but does not require data exchangeability. Theoretically, these intervals attain finite-sample, \textit{approximately valid} marginal coverage for broad classes of regression functions and time-series with strongly mixing stochastic errors. Computationally, \Verb|EnbPI| avoids overfitting and requires neither data-splitting nor training multiple ensemble estimators; it efficiently aggregates bootstrap estimators that have been trained. In general, \Verb|EnbPI| is easy to implement, scalable to producing arbitrarily many prediction intervals sequentially, and well-suited to a wide range of regression functions. We perform extensive real-data analyses to demonstrate its effectiveness.}
+}
+
+
+@InProceedings{xu2023spci,
+  title = 	 {Sequential Predictive Conformal Inference for Time Series},
+  author =       {Xu, Chen and Xie, Yao},
+  booktitle = 	 {Proceedings of the 40th International Conference on Machine Learning},
+  pages = 	 {38707--38727},
+  year = 	 {2023},
+  editor = 	 {Krause, Andreas and Brunskill, Emma and Cho, Kyunghyun and Engelhardt, Barbara and Sabato, Sivan and Scarlett, Jonathan},
+  volume = 	 {202},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {23--29 Jul},
+  publisher =    {PMLR},
+  pdf = 	 {https://proceedings.mlr.press/v202/xu23r/xu23r.pdf},
+  url = 	 {https://proceedings.mlr.press/v202/xu23r.html},
+  abstract = 	 {We present a new distribution-free conformal prediction algorithm for sequential data (e.g., time series), called the <em>sequential predictive conformal inference</em> (SPCI). We specifically account for the nature that time series data are non-exchangeable, and thus many existing conformal prediction algorithms are not applicable. The main idea is to adaptively re-estimate the conditional quantile of non-conformity scores (e.g., prediction residuals), upon exploiting the temporal dependence among them. More precisely, we cast the problem of conformal prediction interval as predicting the quantile of a future residual, given a user-specified point prediction algorithm. Theoretically, we establish asymptotic valid conditional coverage upon extending consistency analyses in quantile regression. Using simulation and real-data experiments, we demonstrate a significant reduction in interval width of SPCI compared to other existing methods under the desired empirical coverage.}
+}
+
+@software{tushar2019flusight,
+  author       = {Abhinav Tushar and
+                  Nicholas G Reich and
+                  tkcy and
+                  brookslogan and
+                  d-osthus and
+                  Craig McGowan and
+                  Evan Ray and
+                  Katie House and
+                  Spencer J Fox and
+                  Evan Moore and
+                  lcbrooks and
+                  Adam Leskis and
+                  Xinyue X and
+                  NutchaW},
+  title        = {{FluSightNetwork/cdc-flusight-ensemble: End of 
+                   2018/2019 US influenza season}},
+  month        = sep,
+  year         = 2019,
+  publisher    = {Zenodo},
+  version      = {v.2.0},
+  doi          = {10.5281/zenodo.3454212},
+  url          = {https://doi.org/10.5281/zenodo.3454212}
+}
