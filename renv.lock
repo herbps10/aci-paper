@@ -12,18 +12,15 @@
     "AdaptiveConformal": {
       "Package": "AdaptiveConformal",
       "Version": "0.1.0",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteUsername": "herbps10",
-      "RemoteRepo": "AdaptiveConformal",
-      "RemoteRef": "main",
-      "RemoteSha": "62a0efb27d78239f238184d37fbf97e16b4ce538",
+      "Source": "Local",
+      "RemoteType": "local",
+      "RemoteUrl": "/Users/herb/AdaptiveConformal",
       "Requirements": [
+        "R",
         "Rdpack",
         "opera"
       ],
-      "Hash": "70a10ca079c2025a15ee9ba85becb0fc"
+      "Hash": "ccb1337b99d109d8765b035d536b80a5"
     },
     "DBI": {
       "Package": "DBI",
@@ -1142,9 +1139,13 @@
     "opera": {
       "Package": "opera",
       "Version": "1.2.1",
-      "Source": "Local",
-      "RemoteType": "local",
-      "RemoteUrl": "/Users/herb/opera",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "herbps10",
+      "RemoteRepo": "opera",
+      "RemoteRef": "master",
+      "RemoteSha": "627278ffb1a406597448d0cb7b507cf01a4beabe",
       "Requirements": [
         "R",
         "Rdpack",
@@ -1155,7 +1156,7 @@
         "pipeR",
         "rAmCharts"
       ],
-      "Hash": "850364561aee6b2265cdcaa8b41463b5"
+      "Hash": "a4af62e510566fc0d912ed86086ac2a8"
     },
     "parallelly": {
       "Package": "parallelly",
