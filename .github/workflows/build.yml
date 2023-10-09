@@ -29,15 +29,12 @@ jobs:
         with:
           r-version: '4.2.2'
 
-      - name: Setup deploy keys
-        run: |
-          eval `ssh-agent -s`
-          ssh-add - <<< '${{ secrets.ADAPTIVE_CONFORMAL_SECRET }}'
-
       - name: Install R Dependencies with renv
         uses: r-lib/actions/setup-renv@v2
         with:
           cache-version: 1
+        env:
+          GITHUB_PAT: ${{ secrets.ADAPTIVE_CONFORMAL_PAT }}
 
       - name: Render and Publish
         uses: quarto-dev/quarto-actions/publish@v2
