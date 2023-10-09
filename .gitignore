@@ -6,7 +6,6 @@
 /*.Rcheck/
 .Rproj.user/
 *_cache/
-/cache/
 *_files/
 template-computo-R.html
 logo_text_white.pdf

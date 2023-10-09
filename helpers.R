@@ -197,7 +197,7 @@ simulation_two_joint_plot <- function(results) {
 
 
 run_simulation_study1 <- function(data, setup, estimate_model, fit, workers = 8) {
-  cache <- "~/aci-paper/cache/simulation_study1.rds"
+  cache <- here::here("./simulation_studies/simulation_study1.rds")
   if(file.exists(cache)) return(read_rds(cache))
   
   plan(multisession, workers = workers)
@@ -238,7 +238,7 @@ run_simulation_study1 <- function(data, setup, estimate_model, fit, workers = 8)
 }
 
 run_simulation_study2 <- function(setup, fit, workers = 8) {
-  cache <- "~/aci-paper/cache/simulation_study2.rds"
+  cache <- here::here("./simulation_studies/simulation_study2.rds")
   if(file.exists(cache)) return(read_rds(cache))
   
   plan(multisession, workers = workers)
