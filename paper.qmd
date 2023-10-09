@@ -23,7 +23,7 @@ author:
     url: http://juliejosse.com/
     orcid: 0000-0001-9547-891X
     affiliations:
-      - name: Inria PreMeDICaL team, Université de Montpellier
+      - name: Inria PreMeDICaL team, Idesp, Université de Montpellier
         url: https://team.inria.fr/premedical/
 date: last-modified
 date-modified: last-modified
