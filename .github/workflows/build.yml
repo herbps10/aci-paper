@@ -16,7 +16,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install -y libcurl4-openssl-dev
+          sudo apt-get install -y libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev
 
       - name: Set up quarto
         uses: quarto-dev/quarto-actions/setup@v2
