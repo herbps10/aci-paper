@@ -15,7 +15,7 @@ author:
     url: https://helios2.mi.parisdescartes.fr/~chambaz/
     orcid: 0000-0002-5592-6471
     affiliations:
-      - name: MAP5 (UMR 8145), Université Paris Cité
+      - name: Université Paris Cité, CNRS, MAP5, F-75006 Paris, France
         department: 
         url: https://map5.mi.parisdescartes.fr/
   - name: Julie Josse
@@ -72,7 +72,7 @@ library(future)
 library(furrr)
 library(progressr)
 
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
 
 source("helpers.R")
 ```
