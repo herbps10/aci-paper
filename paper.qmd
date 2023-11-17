@@ -40,7 +40,7 @@ citation:
   publisher: "Société Française de Statistique"
   issn: "2824-7795"
 bibliography: references.bib
-github-user: computorg
+github-user: herbps10
 repo: "template-computo-r"
 draft: true # set to false once the build is running
 published: false # will be set to true once accepted

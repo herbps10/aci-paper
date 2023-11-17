@@ -1,14 +1,16 @@
 @Preamble{ " \newcommand{\noop}[1]{} " }
 
-@misc{gibbs2021adaptive,
-  title={Adaptive Conformal Inference Under Distribution Shift}, 
-  author={Isaac Gibbs and Emmanuel Candès},
-  year={2021},
-  eprint={2106.00170},
-  archivePrefix={arXiv},
-  primaryClass={stat.ME}
+@inproceedings{gibbs2021adaptive,
+ author = {Gibbs, Isaac and Candes, Emmanuel},
+ booktitle = {Advances in Neural Information Processing Systems},
+ editor = {M. Ranzato and A. Beygelzimer and Y. Dauphin and P.S. Liang and J. Wortman Vaughan},
+ pages = {1660--1672},
+ publisher = {Curran Associates, Inc.},
+ title = {Adaptive Conformal Inference Under Distribution Shift},
+ url = {https://proceedings.neurips.cc/paper_files/paper/2021/file/0d441de75945e5acbc865406fc9a2559-Paper.pdf},
+ volume = {34},
+ year = {2021}
 }
-
 
 @InProceedings{zaffran2022agaci,
   title =    {Adaptive Conformal Predictions for Time Series},
@@ -35,50 +37,79 @@
   primaryClass={stat.ME}
 }
 
-@misc{bhatnagar2023saocp,
-  title={Improved Online Conformal Prediction via Strongly Adaptive Online Learning}, 
-  author={Aadyot Bhatnagar and Huan Wang and Caiming Xiong and Yu Bai},
-  year={2023},
-  eprint={2302.07869},
-  archivePrefix={arXiv},
-  primaryClass={cs.LG}
+@inproceedings{bhatnagar2023saocp,
+author = {Bhatnagar, Aadyot and Wang, Huan and Xiong, Caiming and Bai, Yu},
+title = {Improved Online Conformal Prediction via Strongly Adaptive Online Learning},
+year = {2023},
+publisher = {JMLR.org},
+abstract = {We study the problem of uncertainty quantification via prediction sets, in an online setting where the data distribution may vary arbitrarily over time. Recent work develops online conformal prediction techniques that leverage regret minimization algorithms from the online learning literature to learn prediction sets with approximately valid coverage and small regret. However, standard regret minimization could be insufficient for handling changing environments, where performance guarantees may be desired not only over the full time horizon but also in all (sub-)intervals of time. We develop new online conformal prediction methods that minimize the strongly adaptive regret, which measures the worst-case regret over all intervals of a fixed length. We prove that our methods achieve near-optimal strongly adaptive regret for all interval lengths simultaneously, and approximately valid coverage. Experiments show that our methods consistently obtain better coverage and smaller prediction sets than existing methods on real-world tasks, such as time series forecasting and image classification under distribution shift.},
+booktitle = {Proceedings of the 40th International Conference on Machine Learning},
+articleno = {100},
+numpages = {27},
+location = {Honolulu, Hawaii, USA},
+series = {ICML'23}
 }
 
-@misc{angelopoulos2022gentle,
-      title={A Gentle Introduction to Conformal Prediction and Distribution-Free Uncertainty Quantification}, 
-      author={Anastasios N. Angelopoulos and Stephen Bates},
-      year={2022},
-      eprint={2107.07511},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+
+@article{angelopoulos2022gentle,
+author = {Angelopoulos, Anastasios N. and Bates, Stephen},
+title = {Conformal Prediction: A Gentle Introduction},
+year = {2023},
+issue_date = {Mar 2023},
+publisher = {Now Publishers Inc.},
+address = {Hanover, MA, USA},
+volume = {16},
+number = {4},
+issn = {1935-8237},
+url = {https://doi.org/10.1561/2200000101},
+doi = {10.1561/2200000101},
+abstract = {Black-box machine learning models are now routinely used in high-risk settings, like medical diagnostics, which demand uncertainty quantification to avoid consequential model failures. Conformal prediction (a.k.a. conformal inference) is a user-friendly paradigm for creating statistically rigorous uncertainty sets/intervals for the predictions of such models. Critically, the sets are valid in a distribution-free sense: they possess explicit, non-asymptotic guarantees even without distributional assumptions or model assumptions. One can use conformal prediction with any pre-trained model, such as a neural network, to produce sets that are guaranteed to contain the ground truth with a user-specified probability, such as 90\%. It is easy-to-understand, easy-to-use, and general, applying naturally to problems arising in the fields of computer vision, natural language processing, deep reinforcement learning, and so on.This hands-on introduction is aimed to provide the reader a working understanding of conformal prediction and related distribution-free uncertainty quantification techniques with one self-contained document. We lead the reader through practical theory for and examples of conformal prediction and describe its extensions to complex machine learning tasks involving structured outputs, distribution shift, timeseries, outliers, models that abstain, and more. Throughout, there are many explanatory illustrations, examples, and code samples in Python. With each code sample comes a Jupyter notebook implementing the method on a real-data example; the notebooks can be accessed and easily run by following the code footnotes.},
+journal = {Found. Trends Mach. Learn.},
+month = {mar},
+pages = {494–591},
+numpages = {114}
 }
 
-@misc{barber2023conformal,
-      title={Conformal prediction beyond exchangeability}, 
-      author={Rina Foygel Barber and Emmanuel J. Candes and Aaditya Ramdas and Ryan J. Tibshirani},
-      year={2023},
-      eprint={2202.13415},
-      archivePrefix={arXiv},
-      primaryClass={stat.ME}
+
+
+@article{barber2023conformal,
+	author = {Rina Foygel Barber and Emmanuel J. Cand{\`e}s and Aaditya Ramdas and Ryan J. Tibshirani},
+	doi = {10.1214/23-AOS2276},
+	journal = {The Annals of Statistics},
+	keywords = {conformal prediction, distribution-free inference, exchangeability, jackknife, robust statistics},
+	number = {2},
+	pages = {816 -- 845},
+	publisher = {Institute of Mathematical Statistics},
+	title = {{Conformal prediction beyond exchangeability}},
+	url = {https://doi.org/10.1214/23-AOS2276},
+	volume = {51},
+	year = {2023},
+	bdsk-url-1 = {https://doi.org/10.1214/23-AOS2276}}
+
+
+@article{jung2022batch,
+  bibtex_show = {true},
+  title = {Batch Multivalid Conformal Prediction},
+  author = {Jung, Christopher and Noarov, Georgy and Ramalingam, Ramya and Roth, Aaron},
+  arxiv = {2209.15145},
+  journal = {11th International Conference on Learning Representations (ICLR)},
+  year = {2023},
+  code = {https://github.com/ProgBelarus/BatchMultivalidConformal},
+  preview = {conformal.png}
 }
 
-@misc{jung2022batch,
-      title={Batch Multivalid Conformal Prediction}, 
-      author={Christopher Jung and Georgy Noarov and Ramya Ramalingam and Aaron Roth},
-      year={2022},
-      eprint={2209.15145},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
-}
+@inproceedings{bastani2022practical,
+	author = {Bastani, Osbert and Gupta, Varun and Jung, Christopher and Noarov, Georgy and Ramalingam, Ramya and Roth, Aaron},
+	booktitle = {Advances in Neural Information Processing Systems},
+	editor = {S. Koyejo and S. Mohamed and A. Agarwal and D. Belgrave and K. Cho and A. Oh},
+	pages = {29362--29373},
+	publisher = {Curran Associates, Inc.},
+	title = {Practical Adversarial Multivalid Conformal Prediction},
+	url = {https://proceedings.neurips.cc/paper_files/paper/2022/file/bcdaaa1aec3ae2aa39542acefdec4e4b-Paper-Conference.pdf},
+	volume = {35},
+	year = {2022},
+	bdsk-url-1 = {https://proceedings.neurips.cc/paper_files/paper/2022/file/bcdaaa1aec3ae2aa39542acefdec4e4b-Paper-Conference.pdf}}
 
-@misc{bastani2022practical,
-      title={Practical Adversarial Multivalid Conformal Prediction}, 
-      author={Osbert Bastani and Varun Gupta and Christopher Jung and Georgy Noarov and Ramya Ramalingam and Aaron Roth},
-      year={2022},
-      eprint={2206.01067},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
-}
 
 @book{vovk2005,
   author = {Vovk, Vladimir and Gammerman, Alex and Shafer, Glenn},
@@ -128,23 +159,22 @@
   abstract = {We design and analyze algorithms for online linear optimization that have optimal regret and at the same time do not need to know any upper or lower bounds on the norm of the loss vectors. Our algorithms are instances of the Follow the Regularized Leader (FTRL) and Mirror Descent (MD) meta-algorithms. We achieve adaptiveness to the norms of the loss vectors by scale invariance, i.e., our algorithms make exactly the same decisions if the sequence of loss vectors is multiplied by any positive constant. The algorithm based on FTRL works for any decision set, bounded or unbounded. For unbounded decisions sets, this is the first adaptive algorithm for online linear optimization with a non-vacuous regret bound. In contrast, we show lower bounds on scale-free algorithms based on MD on unbounded domains.}
 }
 
-@misc{gradu2022adaptive,
-      title={Adaptive Regret for Control of Time-Varying Dynamics}, 
-      author={Paula Gradu and Elad Hazan and Edgar Minasyan},
-      year={2022},
-      eprint={2007.04393},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+@InProceedings{gradu2022adaptive,
+  title = 	 {Adaptive Regret for Control of Time-Varying Dynamics},
+  author =       {Gradu, Paula and Hazan, Elad and Minasyan, Edgar},
+  booktitle = 	 {Proceedings of The 5th Annual Learning for Dynamics and Control Conference},
+  pages = 	 {560--572},
+  year = 	 {2023},
+  editor = 	 {Matni, Nikolai and Morari, Manfred and Pappas, George J.},
+  volume = 	 {211},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {15--16 Jun},
+  publisher =    {PMLR},
+  pdf = 	 {https://proceedings.mlr.press/v211/gradu23a/gradu23a.pdf},
+  url = 	 {https://proceedings.mlr.press/v211/gradu23a.html},
+  abstract = 	 {We consider the problem of online control of systems with time-varying linear dynamics. To state meaningful guarantees over changing environments, we introduce the metric of {\it adaptive regret} to the field of control. This metric, originally studied in online learning, measures performance in terms of regret against the best policy in hindsight on {\it any interval in time}, and thus captures the adaptation of the controller to changing dynamics. Our main contribution is a novel efficient meta-algorithm: it converts a controller with sublinear regret bounds into one with sublinear {\it adaptive regret} bounds in the setting of time-varying linear dynamical systems.  The underlying technical innovation is the first adaptive regret bound for the more general framework of online convex optimization with memory. Furthermore, we give a lower bound showing that our attained adaptive regret bound is nearly tight for this general framework.}
 }
 
-@misc{gradu2022adaptive,
-      title={Adaptive Regret for Control of Time-Varying Dynamics}, 
-      author={Paula Gradu and Elad Hazan and Edgar Minasyan},
-      year={2022},
-      eprint={2007.04393},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
-}
 
 @book{cesabianchi2006games,
   place={Cambridge}, 
@@ -227,22 +257,6 @@ pages = {371–421},
 numpages = {51}
 }
 
-@misc{angelopoulos2022gentle,
-      title={A Gentle Introduction to Conformal Prediction and Distribution-Free Uncertainty Quantification}, 
-      author={Anastasios N. Angelopoulos and Stephen Bates},
-      year={2022},
-      eprint={2107.07511},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
-}
-@misc{barber2023conformal,
-      title={Conformal prediction beyond exchangeability}, 
-      author={Rina Foygel Barber and Emmanuel J. Candes and Aaditya Ramdas and Ryan J. Tibshirani},
-      year={2023},
-      eprint={2202.13415},
-      archivePrefix={arXiv},
-      primaryClass={stat.ME}
-}
 @Article{wright2017ranger,
     title = {{ranger}: A Fast Implementation of Random Forests for High Dimensional Data in {C++} and {R}},
     author = {Marvin N. Wright and Andreas Ziegler},
@@ -347,12 +361,20 @@ Functional Setting},
     url = {https://CRAN.R-project.org/package=conformalInference.fd},
 }
 
-@Article{lei2020cfcausal,
-  author = {Lihua Lei and Emmanuel Cand\`es},
-  title = {Conformal Inference of Counterfactuals and Individual Treatment Effects},
-  journal = {Arxiv},
-  year = {2020},
-  url = {https://arxiv.org/abs/2006.06138},
+@article{lei2020cfcausal,
+    author = {Lei, Lihua and Candès, Emmanuel J.},
+    title = "{Conformal Inference of Counterfactuals and Individual Treatment Effects}",
+    journal = {Journal of the Royal Statistical Society Series B: Statistical Methodology},
+    volume = {83},
+    number = {5},
+    pages = {911-938},
+    year = {2021},
+    month = {10},
+    abstract = "{Evaluating treatment effect heterogeneity widely informs treatment decision making. At the moment, much emphasis is placed on the estimation of the conditional average treatment effect via flexible machine learning algorithms. While these methods enjoy some theoretical appeal in terms of consistency and convergence rates, they generally perform poorly in terms of uncertainty quantification. This is troubling since assessing risk is crucial for reliable decision-making in sensitive and uncertain environments. In this work, we propose a conformal inference-based approach that can produce reliable interval estimates for counterfactuals and individual treatment effects under the potential outcome framework. For completely randomized or stratified randomized experiments with perfect compliance, the intervals have guaranteed average coverage in finite samples regardless of the unknown data generating mechanism. For randomized experiments with ignorable compliance and general observational studies obeying the strong ignorability assumption, the intervals satisfy a doubly robust property which states the following: the average coverage is approximately controlled if either the propensity score or the conditional quantiles of potential outcomes can be estimated accurately. Numerical studies on both synthetic and real data sets empirically demonstrate that existing methods suffer from a significant coverage deficit even in simple models. In contrast, our methods achieve the desired coverage with reasonably short intervals.}",
+    issn = {1369-7412},
+    doi = {10.1111/rssb.12445},
+    url = {https://doi.org/10.1111/rssb.12445},
+    eprint = {https://academic.oup.com/jrsssb/article-pdf/83/5/911/49322261/jrsssb\_83\_5\_911.pdf},
 }
 
 @article{gneiting2007scoring,
@@ -385,22 +407,14 @@ keywords = {Forecasting competitions, M competitions, Forecasting accuracy, Pred
 abstract = {The M4 Competition follows on from the three previous M competitions, the purpose of which was to learn from empirical evidence both how to improve the forecasting accuracy and how such learning could be used to advance the theory and practice of forecasting. The aim of M4 was to replicate and extend the three previous competitions by: (a) significantly increasing the number of series, (b) expanding the number of forecasting methods, and (c) including prediction intervals in the evaluation process as well as point forecasts. This paper covers all aspects of M4 in detail, including its organization and running, the presentation of its results, the top-performing methods overall and by categories, its major findings and their implications, and the computational requirements of the various methods. Finally, it summarizes its main conclusions and states the expectation that its series will become a testing ground for the evaluation of new methods and the improvement of the practice of forecasting, while also suggesting some ways forward for the field.}
 }
 
-@misc{feldman2023achieving,
-      title={Achieving Risk Control in Online Learning Settings}, 
-      author={Shai Feldman and Liran Ringel and Stephen Bates and Yaniv Romano},
-      year={2023},
-      eprint={2205.09095},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
-}
-
-@misc{bastani2022practical,
-      title={Practical Adversarial Multivalid Conformal Prediction}, 
-      author={Osbert Bastani and Varun Gupta and Christopher Jung and Georgy Noarov and Ramya Ramalingam and Aaron Roth},
-      year={2022},
-      eprint={2206.01067},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+@article{feldman2023achieving,
+title={Achieving Risk Control in Online Learning Settings},
+author={Shai Feldman and Liran Ringel and Stephen Bates and Yaniv Romano},
+journal={Transactions on Machine Learning Research},
+issn={2835-8856},
+year={2023},
+url={https://openreview.net/forum?id=5Y04GWvoJu},
+note={}
 }
 
 @InProceedings{xu2021enbpi,
