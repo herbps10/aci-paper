@@ -18,14 +18,14 @@
       "RemoteUsername": "herbps10",
       "RemoteRepo": "AdaptiveConformal",
       "RemoteRef": "main",
-      "RemoteSha": "c20e050463ef096e503f83529bf1cfb3aaab4bce",
+      "RemoteSha": "7c45149e676f37f3cbb759bcf92292d5bfe745c8",
       "Requirements": [
         "Rdpack",
         "ggplot2",
         "opera",
         "slider"
       ],
-      "Hash": "7a1a7547e66b06bccd441431b2629438"
+      "Hash": "a2a9d0ee8fe5f74ef2563c489ae2a028"
     },
     "DBI": {
       "Package": "DBI",
