@@ -1,4 +1,16 @@
+library(tidyverse)
+library(patchwork)
+
 label_alpha = label_bquote(cols = {alpha~"="~.(alpha)})
+
+running_example_data <- function(N) {
+  N <- 5e2
+  mu <- rep(0, N)
+  yhat <- mu
+  sigma <- ifelse(1:N <= N / 2, 0.2, 0.05)
+  y <- rnorm(N, mean = mu, sd = sigma)
+  list(y = y, yhat = yhat)
+}
 
 extract_metric <- function(results, metric) {
   unlist(lapply(results, function(result) result$metrics[[metric]]))
@@ -55,12 +67,22 @@ simulation_one_plot <- function(results) {
   plot_pathlength <- results %>%
     ggplot(aes(x = method, y = path_length, color = method)) +
     geom_boxplot() +
+    scale_y_log10() +
     facet_grid(alpha ~ param, scale = "free_y", labeller = labels) +
     labs(x = "", y = expression(PathLength(T)), subtitle = "Path Length") +
     aci_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
   
-  plot_coverr / plot_piwidth / plot_pathlength & theme(plot.margin = margin(0, 0, 0, 0, "cm"))
+  plot_sareg <- results %>%
+    ggplot(aes(x = method, y = strongly_adaptive_regret, color = method)) +
+    geom_boxplot() +
+    scale_y_log10() +
+    facet_grid(alpha ~ param, scale = "free_y", labeller = labels) +
+    labs(x = "", y = expression(SAReg(T, m)), subtitle = "Strongly Adaptive Regret") +
+    aci_theme +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
+  
+  plot_coverr / plot_piwidth / plot_pathlength / plot_sareg & theme(plot.margin = margin(0, 0, 0, 0, "cm"))
 }
 
 simulation_one_joint_plot <- function(results) {
@@ -101,8 +123,8 @@ simulation_two_plot <- function(results) {
     geom_hline(yintercept = 0, lty = 2, alpha = 0.5) +
     facet_grid(distribution_shift ~ alpha, labeller = labels) +
     labs(x = "", y = expression(CovErr(T)), subtitle = "Coverage Error", 
-         title = "Simulation Study: Distribution Shift") +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)) +
+         title = "Simulation Study:\nDistribution Shift") +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1, size = rel(0.75))) +
     aci_theme
   
   plot_piwidth <- results %>%
@@ -112,18 +134,29 @@ simulation_two_plot <- function(results) {
     facet_grid(distribution_shift ~ alpha, labeller = labels, scales = "free_y") +
     labs(x = "", y = expression(MeanWidth(T)), subtitle = "Mean Interval Width") +
     aci_theme +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1, size = rel(0.75)))
   
   plot_pathlength <- results %>%
     ggplot(aes(x = method,
                y = path_length, color = method)) +
     geom_boxplot() +
+    scale_y_log10() +
     facet_grid(distribution_shift ~ alpha, labeller = labels, scales = "free_y") +
     labs(x = "ACI Method", y = expression(PathLength(T)), subtitle = "Path Length") +
-    theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)) +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1, size = rel(0.75))) +
     aci_theme
   
-  plot_coverr / plot_piwidth / plot_pathlength
+  plot_sareg <- results %>%
+    ggplot(aes(x = method,
+               y = strongly_adaptive_regret, color = method)) +
+    geom_boxplot() +
+    scale_y_log10() +
+    facet_grid(distribution_shift ~ alpha, labeller = labels, scales = "free_y") +
+    labs(x = "ACI Method", y = expression(SAReg(T, m)), subtitle = "Strongly Adaptive Regret") +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1, size = rel(0.75))) +
+    aci_theme
+  
+  (plot_coverr + plot_piwidth) / (plot_pathlength + plot_sareg)
 }
 
 case_study_plot <- function(results) {
@@ -149,13 +182,24 @@ case_study_plot <- function(results) {
   plot_pathlength <- results %>%
     ggplot(aes(x = method, y = path_length, color = method)) +
     geom_boxplot() +
+    scale_y_log10() +
     facet_wrap(~alpha, labeller = label_alpha) +
     labs(x = "ACI Method", y = expression(PathLength(T))) +
     labs(subtitle = "Path Length") +
     aci_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
   
-  (plot_coverr / plot_piwidth / plot_pathlength)
+  plot_sareg <- results %>%
+    ggplot(aes(x = method, y = strongly_adaptive_regret, color = method)) +
+    geom_boxplot() +
+    scale_y_log10() +
+    facet_wrap(~alpha, labeller = label_alpha) +
+    labs(x = "ACI Method", y = expression(SAReg(T, m))) +
+    labs(subtitle = "Strongly Adaptive Regret") +
+    aci_theme +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
+  
+  (plot_coverr / plot_piwidth / plot_pathlength / plot_sareg)
 }
 
 simulation_two_joint_plot <- function(results) {
@@ -187,6 +231,7 @@ simulation_two_joint_plot <- function(results) {
     geom_segment(aes(x = coverr_qlower, xend = coverr_qupper, y = path_length_mean, yend = path_length_mean), alpha = 0.5) +
     geom_segment(aes(x = coverr_mean,   xend = coverr_mean, y = path_length_qlower, yend = path_length_qupper), alpha = 0.5) +
     geom_point(aes(shape = `Distribution Shift`), size = 2.5) +
+    scale_y_log10() +
     geom_vline(xintercept = 0, lty = 2, alpha = 0.5) +
     facet_wrap(~alpha,  labeller = label_bquote(alpha~"="~.(alpha))) +
     labs(x = expression(CovErr(T)), y = expression(PathLength(T))) +
